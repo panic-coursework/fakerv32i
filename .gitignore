@@ -1,0 +1,16 @@
+/res 
+
+*.o
+*.d
+
+*.log
+valgrind*
+*.out
+
+/rv32i
+/code
+
+build
+cmake-build-debug
+.vscode
+.idea
