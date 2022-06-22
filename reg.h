@@ -2,17 +2,30 @@
 
 #include <stddef.h>
 
+#include "lib/closure.h"
 #include "rv32i.h"
 
 struct reg_t {
   size_t size;
   void *buf;
   void *next;
-  void (*update)(void *);
+  closure_t *update;
 };
 
-reg_t *reg_create (size_t size, void (*update)(void *));
-void reg_destroy (reg_t *reg);
+reg_t *reg_create(size_t size, closure_t *update, clk_t *clk);
+void reg_free(reg_t *reg);
 
-void reg_read (reg_t *reg, void *buf);
-void reg_tick (reg_t *reg);
+const void *reg_read(reg_t *reg);
+
+struct reg_mut_t {
+  size_t size;
+  void *buf;
+  void *next;
+  int write_count;
+};
+
+reg_mut_t *reg_mut_create(size_t size, clk_t *clk);
+void reg_mut_free(reg_mut_t *reg);
+
+const void *reg_mut_read(reg_mut_t *reg);
+void *reg_mut_write(reg_mut_t *reg);

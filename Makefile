@@ -5,7 +5,7 @@ CXXFLAGS = -g
 
 EXE = rv32i
 
-SRCS = lib/vector.cpp clk.c reg.c main.c
+SRCS = $(shell find . -name '*.cpp' -or  -name '*.c')
 OBJS_C = $(SRCS:.c=.o)
 OBJS = $(OBJS_C:.cpp=.o)
 

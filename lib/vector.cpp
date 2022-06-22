@@ -11,7 +11,7 @@ struct vector_t {
 vector_t *vector_create () {
   return new vector_t;
 }
-void vector_destroy (vector_t *vec) {
+void vector_free (vector_t *vec) {
   delete vec;
 }
 void vector_write (vector_t *vec, size_t ix, void *value) {
@@ -26,6 +26,12 @@ size_t vector_push (vector_t *vec, void *value) {
 }
 size_t vector_size (vector_t *vec) {
   return vec->vec.size();
+}
+
+int _vector_foreach(vector_t *vec, size_t i, void **var) {
+  if (i >= vector_size(vec)) return 0;
+  *var = vector_read(vec, i);
+  return 1;
 }
 
 }
