@@ -17,6 +17,9 @@ void reg_free(reg_t *reg);
 
 const void *reg_read(reg_t *reg);
 
+#define r_read(reg, type) \
+  (const type *) reg_read(reg)
+
 struct reg_mut_t {
   size_t size;
   void *buf;
@@ -29,3 +32,8 @@ void reg_mut_free(reg_mut_t *reg);
 
 const void *reg_mut_read(reg_mut_t *reg);
 void *reg_mut_write(reg_mut_t *reg);
+
+#define rm_read(reg, type) \
+  (const type *) reg_mut_read(reg)
+#define rm_write(reg, type) \
+  *(type *) reg_mut_write(reg)
