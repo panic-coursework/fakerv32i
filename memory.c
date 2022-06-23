@@ -12,13 +12,16 @@
 #include "lib/log.h"
 #include "reg.h"
 #include "rv32i.h"
+#include "rvmath.h"
 
 word_t _mem_get_sz (memory_t *mem, addr_t addr,
                     ls_size_t size) {
   void *base = &mem->data[addr];
   switch (size) {
-    case LS_BYTE: return *(__uint8_t *) base;
-    case LS_HWORD: return *(__uint16_t *) base;
+    case LS_BYTE: return sign_extend(*(__uint8_t *) base, 8);
+    case LS_BYTEU: return *(__uint8_t *) base;
+    case LS_HWORD: return sign_extend(*(__uint16_t *) base, 16);
+    case LS_HWORDU: return *(__uint16_t *) base;
     case LS_WORD: return *(__uint32_t *) base;
     default:
     debug_log("invalid size");

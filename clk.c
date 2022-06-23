@@ -37,7 +37,7 @@ void clk_add_callbefore (clk_t *clk, closure_t *callback) {
 long clk_get (clk_t *clk) {
   return clk->clk;
 }
-void clk_next (clk_t *clk) {
+void clk_tick (clk_t *clk) {
   closure_t *callback;
   vector_foreach(clk->callbefores, i, callback) {
     closure_call(callback, clk);

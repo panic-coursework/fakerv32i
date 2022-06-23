@@ -3,8 +3,7 @@
 #include "rv32i.h"
 
 struct cdb_message_t {
-  rs_id_t clear_busy;
-  reg_id_t dest;
+  rs_id_t rs;
   word_t result;
 };
 
