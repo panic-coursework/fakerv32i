@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "lib/closure.h"
@@ -18,13 +19,14 @@ void reg_free (reg_t *reg);
 const void *reg_read (reg_t *reg);
 
 #define r_read(reg, type) \
-  (const type *) reg_read(reg)
+  ((const type *) reg_read(reg))
 
 struct reg_mut_t {
   size_t size;
   void *buf;
   void *next;
   int write_count;
+  bool allow_multiwrite;
 };
 
 reg_mut_t *reg_mut_create (size_t size, clk_t *clk);
@@ -34,9 +36,9 @@ const void *reg_mut_read (reg_mut_t *reg);
 void *reg_mut_write (reg_mut_t *reg);
 
 #define rm_read(reg, type) \
-  (const type *) reg_mut_read(reg)
+  ((const type *) reg_mut_read(reg))
 #define rm_write(reg, type) \
-  *(type *) reg_mut_write(reg)
+  (*(type *) reg_mut_write(reg))
 
 struct reg_reduce_t {
   size_t size;
@@ -55,6 +57,6 @@ void reg_reduce_write (reg_reduce_t *reg,
                         const void *update);
 
 #define rr_read(reg, type) \
-  (const type *) reg_reduce_read(reg)
+  ((const type *) reg_reduce_read(reg))
 
 reg_reduce_t *reg_or_create (clk_t *clk);
