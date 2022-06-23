@@ -38,4 +38,5 @@ struct bus_helper_t {
 bus_helper_t *bh_create (bus_t *bus);
 void bh_free (bus_helper_t *bh);
 
+bool bh_should_stall (bus_helper_t *bh);
 reg_mut_t *bh_acquire (bus_helper_t *bh);

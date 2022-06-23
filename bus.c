@@ -116,6 +116,10 @@ void bh_free (bus_helper_t *bh) {
   free(bh);
 }
 
+bool bh_should_stall (bus_helper_t *bh) {
+  int ix = _bh_req_ix(bh);
+  return ix >= 0 && *rr_read(bh->busy[!ix], bool);
+}
 reg_mut_t *bh_acquire (bus_helper_t *bh) {
   int req_ix = _bh_req_ix(bh);
   if (req_ix >= 0) {

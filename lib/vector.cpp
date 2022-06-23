@@ -28,7 +28,7 @@ size_t vector_size (vector_t *vec) {
   return vec->vec.size();
 }
 
-int _vector_foreach(vector_t *vec, size_t i, void **var) {
+int _vector_foreach (vector_t *vec, size_t i, void **var) {
   if (i >= vector_size(vec)) return 0;
   *var = vector_read(vec, i);
   return 1;
