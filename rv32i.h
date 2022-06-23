@@ -9,6 +9,7 @@ typedef word_t addr_t;
 typedef struct clk_t clk_t;
 typedef struct reg_t reg_t;
 typedef struct reg_mut_t reg_mut_t;
+typedef struct reg_reduce_t reg_reduce_t;
 
 typedef struct memory_t memory_t;
 typedef struct instr_queue_t instr_queue_t;
@@ -21,3 +22,11 @@ typedef struct store_buffer_t store_buffer_t;
 typedef struct reorder_buffer_t reorder_buffer_t;
 typedef struct execution_unit_t execution_unit_t;
 typedef struct bus_t bus_t;
+typedef struct bus_helper_t bus_helper_t;
+
+#define swap(x, y, type) \
+  {                      \
+    type _swap_tmp = x;  \
+    x = y;               \
+    y = _swap_tmp;       \
+  }
