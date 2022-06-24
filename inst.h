@@ -2,6 +2,8 @@
 
 #include "rv32i.h"
 
+#define INST_SIZE 4
+
 enum inst_op_t {
   // load
   INST_LB  = 0b0000000011,
@@ -76,4 +78,5 @@ struct inst_t {
   reg_id_t rd;
 };
 
-inst_t inst_parse (word_t inst);
+inst_t inst_decode (word_t inst);
+rs_type_t inst_type (inst_t inst);

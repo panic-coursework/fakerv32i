@@ -1,9 +1,11 @@
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "bus.h"
+#include "clk.h"
 #include "lib/closure.h"
 #include "lib/vector.h"
 #include "reg.h"
@@ -25,15 +27,37 @@ void _bus_arb (void *state, ...) {
     }
   }
 }
+void _bus_fire (void *state, ...) {
+  va_list args;
+  va_start(args, state);
+  bool *fire = va_arg(args, bool *);
+  bus_t *bus = (bus_t *) state;
+  *fire = *r_read(bus->arbitrator.gnt, size_t) != 0;
+}
 
+void _bus_tick (void *state, ...) {
+  bus_t *bus = (bus_t *) state;
+  if (r_read(bus->arbitrator.fire, bool)) {
+    closure_t *callback;
+    const void *data = rm_read(bus->data, void);
+    vector_foreach(bus->listeners, i, callback) {
+      closure_call(callback, data);
+    }
+  }
+}
 bus_t *bus_create (size_t size, clk_t *clk) {
   bus_t *bus = (bus_t *) malloc(sizeof(bus_t));
   bus->arbitrator.req = vector_create();
   bus->arbitrator.gnt = reg_create(sizeof(size_t),
     closure_create(_bus_arb, bus), clk);
+  bus->arbitrator.fire = reg_create(sizeof(bool),
+    closure_create(_bus_fire, bus), clk);
   bus->data = reg_mut_create(size, clk);
   bus->size = size;
   bus->clk = clk;
+
+  clk_add_callback(clk, closure_create(_bus_tick, bus));
+
   return bus;
 }
 
@@ -41,6 +65,11 @@ void bus_free (bus_t *bus) {
   vector_free(bus->arbitrator.req);
   reg_free(bus->arbitrator.gnt);
   reg_mut_free(bus->data);
+  closure_t *cb;
+  vector_foreach (bus->listeners, i, cb) {
+    closure_free(cb);
+  }
+  vector_free(bus->listeners);
   free(bus);
 }
 
@@ -57,6 +86,14 @@ void bus_arb_req (bus_t *bus, size_t id) {
 }
 bool bus_arb_status (bus_t *bus, size_t id) {
   return *r_read(bus->arbitrator.gnt, size_t) == id;
+}
+
+const void *bus_get_data (bus_t *bus) {
+  if (!*r_read(bus->arbitrator.fire, bool)) return NULL;
+  return rm_read(bus->data, void);
+}
+void bus_listen (bus_t *bus, closure_t *callback) {
+  vector_push(bus->listeners, callback);
 }
 
 // TODO: test those stuff

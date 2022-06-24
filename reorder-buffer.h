@@ -31,7 +31,8 @@ struct reorder_buffer_t {
 #define ROB_UNIT_SIZE 16
 
 struct rob_unit_t {
-  reg_store_t *regs;
+  reg_file_t *reg_file;
+  reg_store_t *reg_store;
   ls_queue_t *ls_queue;
   queue_t *robs;
 };
@@ -39,3 +40,8 @@ struct rob_unit_t {
 rob_unit_t *rob_unit_create (reg_store_t *regs,
                              ls_queue_t *queue, clk_t *clk);
 void rob_unit_free (rob_unit_t *rob_unit);
+
+reorder_buffer_t *rob_unit_find (rob_unit_t *unit,
+                                 rob_id_t id);
+bool rob_unit_full (rob_unit_t *unit);
+reorder_buffer_t *rob_unit_acquire (rob_unit_t *unit);

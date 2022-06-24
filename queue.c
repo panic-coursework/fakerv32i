@@ -36,6 +36,9 @@ reg_mut_t *queue_nth (queue_t *queue, int ix) {
   ix = _queue_trunc(ix + head, queue->capacity);
   return queue->data[ix];
 }
+reg_mut_t *queue_id (queue_t *queue, int id) {
+  return queue->data[id];
+}
 size_t queue_length (queue_t *queue) {
   int head = *rm_read(queue->head, int);
   int tail = *rm_read(queue->tail, int);

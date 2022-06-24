@@ -46,9 +46,7 @@ void *reg_write (reg_t *reg) {
 
 void _reg_mut_tick (void *_reg, ...) {
   reg_mut_t *reg = (reg_mut_t *) _reg;
-  void *tmp = reg->buf;
-  reg->buf = reg->next;
-  reg->next = tmp;
+  memcpy(reg->buf, reg->next, reg->size);
   reg->write_count = 0;
 }
 

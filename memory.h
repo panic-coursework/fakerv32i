@@ -38,6 +38,7 @@ void mem_free (memory_t *mem);
 
 void mem_set (memory_t *mem, addr_t addr, byte_t value);
 byte_t mem_get (memory_t *mem, addr_t addr);
+word_t mem_get_inst (memory_t *mem, addr_t addr);
 
 status_t mem_request_load (memory_t *mem, addr_t addr,
   ls_size_t size, cdb_message_t base_msg);

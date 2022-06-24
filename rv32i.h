@@ -39,7 +39,7 @@ typedef struct queue_t queue_t;
 typedef struct inst_t inst_t;
 
 typedef struct memory_t memory_t;
-typedef struct inst_queue_t inst_queue_t;
+typedef struct inst_unit_t inst_unit_t;
 typedef struct reg_store_t reg_store_t;
 typedef struct reg_file_t reg_file_t;
 typedef struct reservation_station_t reservation_station_t;
@@ -84,6 +84,15 @@ typedef enum rs_type_t {
   RS_LOAD_BUFFER,
   RS_STORE_BUFFER,
 } rs_type_t;
+
+typedef enum inst_layout_t {
+  INSTL_R,
+  INSTL_I,
+  INSTL_S,
+  INSTL_B,
+  INSTL_U,
+  INSTL_J,
+} inst_layout_t;
 
 typedef enum rob_op_t {
   ROB_REGISTER,
