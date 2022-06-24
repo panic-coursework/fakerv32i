@@ -60,3 +60,15 @@ void reg_reduce_write (reg_reduce_t *reg,
   ((const type *) reg_reduce_read(reg))
 
 reg_reduce_t *reg_or_create (clk_t *clk);
+
+struct busy_wait_t {
+  reg_reduce_t *stall;
+  reg_mut_t *signal; // bool
+};
+
+busy_wait_t *busy_wait_create (clk_t *clk);
+void busy_wait_free (busy_wait_t *reg);
+
+void busy_wait (busy_wait_t *reg);
+bool busy_wait_should_stall (busy_wait_t *reg);
+reg_mut_t *busy_wait_callback (busy_wait_t *reg);

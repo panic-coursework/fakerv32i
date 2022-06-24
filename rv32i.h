@@ -17,6 +17,11 @@ typedef enum ls_size_t {
   LS_HWORDU = 0b101,
 } ls_size_t;
 
+typedef enum ls_op_t {
+  LS_LOAD,
+  LS_STORE,
+} ls_op_t;
+
 typedef __uint8_t byte_t;
 typedef __uint32_t word_t;
 typedef word_t addr_t;
@@ -28,6 +33,8 @@ typedef struct clk_t clk_t;
 typedef struct reg_t reg_t;
 typedef struct reg_mut_t reg_mut_t;
 typedef struct reg_reduce_t reg_reduce_t;
+typedef struct busy_wait_t busy_wait_t;
+typedef struct queue_t queue_t;
 
 typedef struct inst_t inst_t;
 
@@ -48,6 +55,8 @@ typedef struct alu_pool_t alu_pool_t;
 typedef struct bus_t bus_t;
 typedef struct bus_helper_t bus_helper_t;
 typedef struct cdb_message_t cdb_message_t;
+typedef struct ls_queue_t ls_queue_t;
+typedef struct ls_queue_payload_t ls_queue_payload_t;
 
 #define swap(x, y, type) \
   {                      \
@@ -80,4 +89,5 @@ typedef enum rob_op_t {
   ROB_REGISTER,
   ROB_STORE,
   ROB_BRANCH,
+  ROB_JALR,
 } rob_op_t;

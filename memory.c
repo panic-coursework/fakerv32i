@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <endian.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,10 @@
 #include "reg.h"
 #include "rv32i.h"
 #include "rvmath.h"
+
+#if BYTE_ORDER != LITTLE_ENDIAN
+#error This program runs only on little endian architectures
+#endif
 
 word_t _mem_get_sz (memory_t *mem, addr_t addr,
                     ls_size_t size) {
@@ -48,6 +53,7 @@ void _mem_tick (void *state, ...) {
       if (!reg) continue;
       cdb_message_t msg = req->base_msg;
       msg.result = _mem_get_sz(mem, req->addr, req->size);
+      rm_write(reg, cdb_message_t) = msg;
       continue;
     }
   }
@@ -96,6 +102,9 @@ void mem_set (memory_t *mem, addr_t addr, byte_t value) {
 }
 byte_t mem_get (memory_t *mem, addr_t addr) {
   return mem->data[addr];
+}
+word_t mem_get_inst (memory_t *mem, addr_t addr) {
+  return _mem_get_sz(mem, addr, LS_WORD);
 }
 
 int _mem_acquire_load_req (memory_t *mem) {

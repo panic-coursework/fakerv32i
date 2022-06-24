@@ -134,3 +134,33 @@ reg_reduce_t *reg_or_create (clk_t *clk) {
   reg->reducer->data = reg;
   return reg;
 }
+
+void _busy_wait_tick (void *state, ...) {
+  busy_wait_t *reg = (busy_wait_t *) state;
+  if (!rr_read(reg->stall, bool)) return;
+  if (!rm_read(reg->signal, bool)) busy_wait(reg);
+}
+busy_wait_t *busy_wait_create (clk_t *clk) {
+  busy_wait_t *reg =
+    (busy_wait_t *) malloc(sizeof(busy_wait_t));
+  reg->stall = reg_or_create(clk);
+  reg->signal = reg_mut_create(sizeof(bool), clk);
+  clk_add_callback(clk, closure_create(_busy_wait_tick, reg));
+  return reg;
+}
+void busy_wait_free (busy_wait_t *reg) {
+  reg_reduce_free(reg->stall);
+  reg_mut_free(reg->signal);
+  free(reg);
+}
+
+void busy_wait (busy_wait_t *reg) {
+  bool t = true;
+  reg_reduce_write(reg->stall, &t);
+}
+bool busy_wait_should_stall (busy_wait_t *reg) {
+  return rr_read(reg->stall, bool);
+}
+reg_mut_t *busy_wait_callback (busy_wait_t *reg) {
+  return reg->signal;
+}
