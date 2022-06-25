@@ -18,6 +18,7 @@ void queue_free (queue_t *queue);
 reg_mut_t *queue_nth (queue_t *queue, int ix);
 reg_mut_t *queue_id (queue_t *queue, int id);
 size_t queue_length (queue_t *queue);
+bool queue_empty (queue_t *queue);
 bool queue_full (queue_t *queue);
 reg_mut_t *queue_push (queue_t *queue);
 reg_mut_t *queue_pop (queue_t *queue);

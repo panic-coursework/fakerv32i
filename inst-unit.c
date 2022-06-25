@@ -33,7 +33,6 @@ void _inst_unit_tick (void *state, ...) {
 inst_unit_t *inst_unit_create (memory_t *mem,
                                rs_unit_t *rs_unit,
                                rob_unit_t *rob_unit,
-                               reg_file_t *reg_file,
                                reg_store_t *reg_store,
                                bus_t *cdb,
                                clk_t *clk) {
@@ -43,7 +42,6 @@ inst_unit_t *inst_unit_create (memory_t *mem,
   unit->mem = mem;
   unit->rs_unit = rs_unit;
   unit->rob_unit = rob_unit;
-  unit->reg_file = reg_file;
   unit->reg_store = reg_store;
   unit->cdb = cdb;
 

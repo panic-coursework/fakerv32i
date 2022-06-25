@@ -44,6 +44,11 @@ size_t queue_length (queue_t *queue) {
   int tail = *rm_read(queue->tail, int);
   return (tail + queue->capacity - head) % queue->capacity;
 }
+bool queue_empty (queue_t *queue) {
+  int head = *rm_read(queue->head, int);
+  int tail = *rm_read(queue->tail, int);
+  return head == tail;
+}
 bool queue_full (queue_t *queue) {
   int head = *rm_read(queue->head, int);
   int tail = *rm_read(queue->tail, int);
