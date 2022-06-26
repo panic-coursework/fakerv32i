@@ -9,6 +9,7 @@ struct queue_t {
   reg_mut_t **data;
   reg_mut_t *head; // int
   reg_mut_t *tail; // int, past-the-end
+  reg_mut_t *clear;
 };
 
 queue_t *queue_create (size_t capacity, size_t size,
@@ -23,3 +24,4 @@ bool queue_full (queue_t *queue);
 reg_mut_t *queue_push (queue_t *queue);
 reg_mut_t *queue_pop (queue_t *queue);
 reg_mut_t *queue_first (queue_t *queue);
+void queue_clear (queue_t *queue);

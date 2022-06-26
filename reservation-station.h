@@ -30,6 +30,7 @@ struct rs_unit_t {
   vector_t *store_buffers;
   // TODO: maintain it
   vector_t *id_map;
+  reg_mut_t *clear;
 };
 
 reservation_station_t *rs_create (rs_id_t id,
@@ -54,3 +55,4 @@ reservation_station_t *rs_unit_acquire (rs_unit_t *unit,
 // TODO: is this used?
 reservation_station_t *rs_unit_find (rs_unit_t *unit,
                                      rs_id_t id);
+void rs_unit_clear (rs_unit_t *unit);

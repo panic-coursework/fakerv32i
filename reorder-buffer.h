@@ -34,14 +34,20 @@ struct reorder_buffer_t {
 struct rob_unit_t {
   reg_store_t *reg_store;
   ls_queue_t *ls_queue;
+  inst_unit_t *inst_unit; // for force_pc()
+  rs_unit_t *rs_unit; // for clear()
   queue_t *robs; // reorder_buffer_t
 };
 
 rob_unit_t *rob_unit_create (reg_store_t *regs,
-                             ls_queue_t *queue, clk_t *clk);
+                             ls_queue_t *queue,
+                             inst_unit_t *inst_unit,
+                             rs_unit_t *rs_unit,
+                             clk_t *clk);
 void rob_unit_free (rob_unit_t *rob_unit);
 
 const reorder_buffer_t *rob_unit_find (rob_unit_t *unit,
                                        rob_id_t id);
 bool rob_unit_full (rob_unit_t *unit);
 reorder_buffer_t *rob_unit_acquire (rob_unit_t *unit);
+void rob_unit_clear (rob_unit_t *unit);

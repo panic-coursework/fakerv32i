@@ -22,10 +22,9 @@ struct ls_queue_t {
   memory_t *mem;
 };
 
-// TODO: _ls_queue_tick
 ls_queue_t *ls_queue_create (memory_t *mem, clk_t *clk);
 void ls_queue_free (ls_queue_t *queue);
 
 bool ls_queue_full (ls_queue_t *queue);
-void ls_queue_push (ls_queue_t *queue,
-                    ls_queue_payload_t payload);
+status_t ls_queue_push (ls_queue_t *queue,
+                        ls_queue_payload_t payload);

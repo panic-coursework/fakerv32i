@@ -64,8 +64,21 @@ bool _rs_ready (reservation_station_t *rs) {
 void _rsu_check_alu (rs_unit_t *unit, vector_t *rss);
 void _rsu_check_load (rs_unit_t *unit, vector_t *rss);
 void _rsu_check_store (rs_unit_t *unit, vector_t *rss);
+void _rsu_clear (vector_t *rss) {
+  reservation_station_t *rs;
+  vector_foreach (rss, i, rs) {
+    rm_write(rs->busy, bool) = false;
+  }
+}
 void _rs_unit_tick (void *state, ...) {
   rs_unit_t *unit = (rs_unit_t *) state;
+  if (*rm_read(unit->clear, bool)) {
+    rm_write(unit->clear, bool) = false;
+    _rsu_clear(unit->alu_stations);
+    _rsu_clear(unit->load_buffers);
+    _rsu_clear(unit->store_buffers);
+    return;
+  }
   _rsu_check_alu(unit, unit->alu_stations);
   _rsu_check_load(unit, unit->load_buffers);
   _rsu_check_store(unit, unit->store_buffers);
@@ -79,6 +92,7 @@ rs_unit_t *rs_unit_create (alu_pool_t *alu_pool,
   unit->load_buffers = vector_create();
   unit->store_buffers = vector_create();
   unit->id_map = vector_create();
+  unit->clear = reg_mut_create(sizeof(bool), clk);
 
   clk_add_callback(clk, closure_create(_rs_unit_tick, unit));
 
@@ -94,6 +108,7 @@ void rs_unit_free (rs_unit_t *rs) {
   _rs_vec_free(rs->load_buffers);
   _rs_vec_free(rs->store_buffers);
   _rs_vec_free(rs->id_map);
+  reg_mut_free(rs->clear);
   free(rs);
 }
 
@@ -121,6 +136,9 @@ reservation_station_t *rs_unit_acquire (rs_unit_t *unit,
     if (!*rm_read(rs->busy, bool)) return rs;
   }
   return NULL;
+}
+void rs_unit_clear (rs_unit_t *unit) {
+  // TODO
 }
 
 void _rsu_check_alu (rs_unit_t *unit, vector_t *rss) {

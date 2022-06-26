@@ -4,6 +4,14 @@
 #include "reg.h"
 #include "rv32i.h"
 
+void _queue_tick (void *state, ...) {
+  queue_t *queue = (queue_t *) state;
+  if (*rm_read(queue->clear, bool)) {
+    rm_write(queue->clear, bool) = false;
+    rm_write(queue->head, int) = 0;
+    rm_write(queue->tail, int) = 0;
+  }
+}
 queue_t *queue_create (size_t capacity, size_t size,
                        clk_t *clk) {
   queue_t *queue = (queue_t *) malloc(sizeof(queue_t));
@@ -14,6 +22,7 @@ queue_t *queue_create (size_t capacity, size_t size,
   }
   queue->head = reg_mut_create(sizeof(int), clk);
   queue->tail = reg_mut_create(sizeof(int), clk);
+  queue->clear = reg_mut_create(sizeof(bool), clk);
   queue->capacity = capacity;
   return queue;
 }
@@ -75,4 +84,8 @@ reg_mut_t *queue_first (queue_t *queue) {
   int tail = *rm_read(queue->tail, int);
   if (head == tail) return NULL;
   return queue->data[head];
+}
+
+void queue_clear (queue_t *queue) {
+  rm_write(queue->clear, bool) = true;
 }

@@ -10,6 +10,11 @@
 #include "reservation-station.h"
 #include "rv32i.h"
 
+struct _inst_unit_force_pc {
+  bool busy;
+  addr_t addr;
+};
+
 addr_t _inst_dispatch (inst_unit_t *unit,
                        reservation_station_t *rs,
                        reorder_buffer_t *rob,
@@ -17,6 +22,14 @@ addr_t _inst_dispatch (inst_unit_t *unit,
 
 void _inst_unit_tick (void *state, ...) {
   inst_unit_t *unit = (inst_unit_t *) state;
+  struct _inst_unit_force_pc rec =
+    *rm_read(unit->force_pc, struct _inst_unit_force_pc);
+  if (rec.busy) {
+    rm_write(unit->force_pc, struct _inst_unit_force_pc)
+      .busy = false;
+    rm_write(unit->pc, addr_t) = rec.addr;
+    return;
+  }
   if (rob_unit_full(unit->rob_unit)) return;
   addr_t pc = *rm_read(unit->pc, addr_t);
   word_t inst_bin = mem_get_inst(unit->mem, pc);
@@ -60,4 +73,11 @@ addr_t _inst_dispatch (inst_unit_t *unit,
                        inst_t inst) {
   // TODO
   // TODO: see if cdb has some data we need
+}
+
+void inst_unit_force_pc (inst_unit_t *unit, addr_t pc) {
+  struct _inst_unit_force_pc *rec =
+    &rm_write(unit->force_pc, struct _inst_unit_force_pc);
+  rec->addr = pc;
+  rec->busy = true;
 }
