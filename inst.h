@@ -61,8 +61,8 @@ typedef enum inst_op_t inst_op_t;
 enum opcodes_t {
   OPC_LOAD   = 0b0000011,
   OPC_STORE  = 0b0100011,
-  OPC_ALUI   = 0b0010011,
-  OPC_ALUR   = 0b0110011,
+  OPC_IMM    = 0b0010011,
+  OPC_OP     = 0b0110011,
   OPC_AUIPC  = 0b0010111,
   OPC_LUI    = 0b0110111,
   OPC_BRANCH = 0b1100011,
@@ -76,6 +76,7 @@ struct inst_t {
   word_t immediate;
   reg_id_t rs1, rs2;
   reg_id_t rd;
+  ls_size_t width;
 };
 
 inst_t inst_decode (word_t inst);
