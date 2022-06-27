@@ -15,6 +15,7 @@ struct rob_payload_t {
   // for ROB_STORE and ROB_JALR
   ls_size_t size;
   addr_t addr;
+  bool addr_ready, value_ready;
   // for ROB_BRANCH
   addr_t fallback;
   bool predicted_take;

@@ -108,6 +108,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
     buf->payload =
       reg_mut_create(sizeof(rob_payload_t), clk);
   }
+  // TODO: cdb related business
   return unit;
 }
 void rob_unit_free (rob_unit_t *unit) {

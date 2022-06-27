@@ -3,15 +3,20 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "ls-queue.h"
 #include "reservation-station.h"
+#include "alu.h"
 #include "bus.h"
 #include "clk.h"
 #include "common-data-bus.h"
 #include "lib/closure.h"
 #include "lib/log.h"
 #include "lib/vector.h"
+#include "queue.h"
 #include "reg.h"
+#include "reorder-buffer.h"
 #include "rv32i.h"
+#include "rvmath.h"
 
 void _rs_onmsg (void *state, ...) {
   va_list args; va_start(args, state);
@@ -19,18 +24,14 @@ void _rs_onmsg (void *state, ...) {
   va_end(args);
   reservation_station_t *rs = (reservation_station_t *) state;
   if (!*rm_read(rs->busy, bool)) return;
-  if (rs->id == msg->rs) {
-    rm_write(rs->busy, bool) = false;
-    return;
-  }
   rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
   bool modified = false;
-  if (data.src1 == rs->id) {
+  if (data.src1 == msg->rob) {
     modified = true;
     data.value1 = msg->result;
     data.src1 = 0;
   }
-  if (data.src2 == rs->id) {
+  if (data.src2 == msg->rob) {
     modified = true;
     data.value2 = msg->result;
     data.src2 = 0;
@@ -137,16 +138,99 @@ reservation_station_t *rs_unit_acquire (rs_unit_t *unit,
   }
   return NULL;
 }
+
 void rs_unit_clear (rs_unit_t *unit) {
-  // TODO
+  rm_write(unit->clear, bool) = true;
 }
 
+addr_t _rs_calc_addr (rs_payload_t data) {
+  return data.addr + data.value1;
+}
 void _rsu_check_alu (rs_unit_t *unit, vector_t *rss) {
-  // TODO
+  reservation_station_t *rs;
+  int alu_id = 0;
+  vector_foreach (rss, i, rs) {
+    assert(rs->type == RS_RESERVATION_STATION);
+    if (!*rm_read(rs->busy, bool)) continue;
+    rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
+    if (data.src1 != 0 || data.src2 != 0) continue;
+    rm_write(rs->busy, bool) = false;
+    alu_task(unit->alu_pool->alus[alu_id++], (alu_task_t) {
+      .busy = true,
+      .base_msg = (cdb_message_t) {
+        .rob = data.dest,
+      },
+      .op = data.op_alu,
+      .value1 = data.value1,
+      .value2 = data.value2,
+    });
+    if (alu_id >= ALU_COUNT) break;
+  }
+}
+bool _rsu_overlap (addr_t addr1, ls_size_t size1,
+                   addr_t addr2, ls_size_t size2) {
+  if (addr1 == addr2) return true;
+  if (addr1 > addr2) {
+    swap(addr1, addr2, addr_t);
+    swap(size1, size2, ls_size_t);
+  }
+  assert(addr1 < addr2);
+  return addr1 + ls_size(size1) <= addr2;
 }
 void _rsu_check_load (rs_unit_t *unit, vector_t *rss) {
-  // TODO
+  if (ls_queue_full(unit->ls_queue)) return;
+  reservation_station_t *rs;
+  vector_foreach (rss, i, rs) {
+    assert(rs->type == RS_LOAD_BUFFER);
+    if (!*rm_read(rs->busy, bool)) continue;
+    rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
+    if (data.src1 != 0 || data.src2 != 0) continue;
+    addr_t addr = _rs_calc_addr(data);
+    reg_mut_t *reg;
+    bool blocking = false;
+    queue_foreach (unit->rob_unit->robs, i, reg) {
+      const reorder_buffer_t *rob =
+        rm_read(reg, reorder_buffer_t);
+      const rob_payload_t *rob_data =
+        rm_read(rob->payload, rob_payload_t);
+      if (rob_data->op == ROB_STORE) {
+        blocking = !rob_data->addr_ready ||
+          _rsu_overlap(addr, data.op_ls,
+                       rob_data->addr, rob_data->size);
+        if (blocking) break;
+      }
+    }
+    if (blocking) continue;
+    // not blocking, and ready to issue.
+    // discard results as we are sure the queue isn't full.
+    ls_queue_push(unit->ls_queue, (ls_queue_payload_t) {
+      .addr = addr,
+      .base_msg = (cdb_message_t) {
+        .rob = data.dest,
+      },
+      .op = LS_LOAD,
+      .size = data.op_ls,
+    });
+    // only write one command at a time.
+    break;
+  }
 }
 void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
-  // TODO
+  if (ls_queue_full(unit->ls_queue)) return;
+  reservation_station_t *rs;
+  vector_foreach (rss, i, rs) {
+    assert(rs->type == RS_LOAD_BUFFER);
+    if (!*rm_read(rs->busy, bool)) continue;
+    rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
+    if (data.src1 != 0 || data.src2 != 0) continue;
+    addr_t addr = _rs_calc_addr(data);
+    const reorder_buffer_t *rob =
+      rob_unit_find(unit->rob_unit, data.dest);
+    rob_payload_t old =
+      *rm_read(rob->payload, rob_payload_t);
+    old.addr_ready = true;
+    old.addr = addr;
+    old.value_ready = true;
+    old.value = data.value2;
+  }
 }

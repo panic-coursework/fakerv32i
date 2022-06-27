@@ -9,8 +9,10 @@
 struct rs_payload_t {
   alu_op_t op_alu;
   ls_size_t op_ls;
+  // for LOAD, value1 = addr
+  // for STORE, value1 = addr, value2 = value
   word_t value1, value2;
-  rs_id_t src1, src2;
+  rob_id_t src1, src2;
   rob_id_t dest;
   addr_t addr;
 };
@@ -25,6 +27,7 @@ struct reservation_station_t {
 struct rs_unit_t {
   alu_pool_t *alu_pool;
   ls_queue_t *ls_queue;
+  rob_unit_t *rob_unit; // need to be manually handled
   vector_t *alu_stations;
   vector_t *load_buffers;
   vector_t *store_buffers;

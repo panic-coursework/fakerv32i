@@ -3,7 +3,7 @@
 #include "rv32i.h"
 
 struct cdb_message_t {
-  rs_id_t rs;
+  rob_id_t rob;
   word_t result;
 };
 

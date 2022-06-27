@@ -25,3 +25,9 @@ reg_mut_t *queue_push (queue_t *queue);
 reg_mut_t *queue_pop (queue_t *queue);
 reg_mut_t *queue_first (queue_t *queue);
 void queue_clear (queue_t *queue);
+
+#define queue_foreach(queue, i, var) \
+  for (int i; _queue_foreach(queue, &i, &var); ++i)
+
+bool _queue_foreach (queue_t *queue, int *i,
+                     reg_mut_t **var);
