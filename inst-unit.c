@@ -41,7 +41,6 @@ void _inst_unit_tick (void *state, ...) {
 
 inst_unit_t *inst_unit_create (memory_t *mem,
                                rs_unit_t *rs_unit,
-                               rob_unit_t *rob_unit,
                                reg_store_t *reg_store,
                                branch_predictor_t *bp,
                                bus_t *cdb,
@@ -51,7 +50,6 @@ inst_unit_t *inst_unit_create (memory_t *mem,
   unit->pc = reg_mut_create(sizeof(addr_t), clk);
   unit->mem = mem;
   unit->rs_unit = rs_unit;
-  unit->rob_unit = rob_unit;
   unit->reg_store = reg_store;
   unit->branch_predictor = bp;
   unit->cdb = cdb;

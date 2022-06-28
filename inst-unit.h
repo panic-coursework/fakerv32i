@@ -7,7 +7,7 @@ struct inst_unit_t {
   reg_mut_t *force_pc; // struct <private>
   memory_t *mem;
   rs_unit_t *rs_unit;
-  rob_unit_t *rob_unit;
+  rob_unit_t *rob_unit; // needs to be maintained manually
   branch_predictor_t *branch_predictor;
   reg_store_t *reg_store;
   bus_t *cdb;
@@ -15,7 +15,6 @@ struct inst_unit_t {
 
 inst_unit_t *inst_unit_create (memory_t *mem,
                                rs_unit_t *rs_unit,
-                               rob_unit_t *rob_unit,
                                reg_store_t *reg_store,
                                branch_predictor_t *bp,
                                bus_t *cdb,

@@ -59,6 +59,7 @@ typedef struct cdb_message_t cdb_message_t;
 typedef struct ls_queue_t ls_queue_t;
 typedef struct ls_queue_payload_t ls_queue_payload_t;
 typedef struct branch_predictor_t branch_predictor_t;
+typedef struct cpu_t cpu_t;
 
 #define swap(x, y, type) \
   {                      \
