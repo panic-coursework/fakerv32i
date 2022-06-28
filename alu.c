@@ -58,6 +58,8 @@ alu_t *alu_create (bus_t *cdb) {
 }
 void alu_free (alu_t *alu) {
   bh_free(alu->cdb_helper);
+  reg_mut_free(alu->task);
+  reg_mut_free(alu->result_buf);
   free(alu);
 }
 

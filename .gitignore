@@ -5,6 +5,7 @@
 
 *.log
 valgrind*
+vgcore*
 *.out
 
 /rv32i

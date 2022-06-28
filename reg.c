@@ -22,8 +22,8 @@ reg_t *reg_create (size_t size, closure_t *update,
                    clk_t *clk) {
   reg_t *reg = (reg_t *) malloc(sizeof(reg_t));
   reg->size = size;
-  reg->buf = malloc(size);
-  reg->next = malloc(size);
+  reg->buf = calloc(1, size);
+  reg->next = calloc(1, size);
   reg->update = update;
 
   clk_add_callback(clk, closure_create(_reg_tick, reg));
@@ -32,6 +32,7 @@ reg_t *reg_create (size_t size, closure_t *update,
 }
 
 void reg_free (reg_t *reg) {
+  closure_free(reg->update);
   free(reg->buf);
   free(reg->next);
   free(reg);
@@ -53,8 +54,8 @@ void _reg_mut_tick (void *_reg, ...) {
 reg_mut_t *reg_mut_create (size_t size, clk_t *clk) {
   reg_mut_t *reg = (reg_mut_t *) malloc(sizeof(reg_mut_t));
   reg->size = size;
-  reg->buf = malloc(size);
-  reg->next = malloc(size);
+  reg->buf = calloc(1, size);
+  reg->next = calloc(1, size);
   reg->write_count = 0;
   reg->allow_multiwrite = false;
 
@@ -73,7 +74,7 @@ const void *reg_mut_read (reg_mut_t *reg) {
 }
 void *reg_mut_write (reg_mut_t *reg) {
   if (++reg->write_count > 1 && !reg->allow_multiwrite) {
-    debug_log("reg_write called more than once!");
+    debug_log("reg_mut_write called more than once!");
   }
   return reg->next;
 }
@@ -87,12 +88,13 @@ void _reg_reduce_tick (void *_reg, ...) {
 }
 reg_reduce_t *reg_reduce_create (size_t size,
   const void *init, closure_t *reducer, clk_t *clk) {
-  reg_reduce_t *reg = (reg_reduce_t *) malloc(sizeof(reg_t));
+  reg_reduce_t *reg =
+    (reg_reduce_t *) malloc(sizeof(reg_reduce_t));
   reg->size = size;
   reg->init = malloc(size);
   memcpy(reg->init, init, size);
-  reg->buf = malloc(size);
-  reg->next = malloc(size);
+  reg->buf = calloc(1, size);
+  reg->next = calloc(1, size);
   reg->reducer = reducer;
 
   clk_add_callbefore(clk, closure_create(_reg_reduce_tick, reg));
@@ -140,7 +142,7 @@ void _busy_wait_tick (void *state, ...) {
 }
 busy_wait_t *busy_wait_create (clk_t *clk) {
   busy_wait_t *reg =
-    (busy_wait_t *) malloc(sizeof(busy_wait_t));
+    (busy_wait_t *) calloc(1, sizeof(busy_wait_t));
   reg->stall = reg_or_create(clk);
   reg->signal = reg_mut_create(sizeof(bool), clk);
   clk_add_callback(clk, closure_create(_busy_wait_tick, reg));

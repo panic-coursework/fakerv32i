@@ -1,7 +1,8 @@
 #pragma once
 
-#define debug_log(...) _debug_log(__FILE__, __LINE__, \
-                                  __VA_ARGS__)
+#include <stdio.h>
 
-void _debug_log (const char *filename, int line,
-                 const char *format, ...);
+#define debug_log(...)                                \
+  fprintf(stderr, "In %s:%d : ", __FILE__, __LINE__); \
+  fprintf(stderr, __VA_ARGS__);                       \
+  fprintf(stderr, "\n")

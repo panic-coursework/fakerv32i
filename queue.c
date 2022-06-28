@@ -33,6 +33,7 @@ void queue_free (queue_t *queue) {
   free(queue->data);
   reg_mut_free(queue->head);
   reg_mut_free(queue->tail);
+  reg_mut_free(queue->clear);
   free(queue);
 }
 

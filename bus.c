@@ -55,6 +55,7 @@ bus_t *bus_create (size_t size, clk_t *clk) {
   bus->data = reg_mut_create(size, clk);
   bus->size = size;
   bus->clk = clk;
+  bus->listeners = vector_create();
 
   clk_add_callback(clk, closure_create(_bus_tick, bus));
 
@@ -62,8 +63,13 @@ bus_t *bus_create (size_t size, clk_t *clk) {
 }
 
 void bus_free (bus_t *bus) {
+  reg_mut_t *reg;
+  vector_foreach (bus->arbitrator.req, i, reg) {
+    reg_mut_free(reg);
+  }
   vector_free(bus->arbitrator.req);
   reg_free(bus->arbitrator.gnt);
+  reg_free(bus->arbitrator.fire);
   reg_mut_free(bus->data);
   closure_t *cb;
   vector_foreach (bus->listeners, i, cb) {

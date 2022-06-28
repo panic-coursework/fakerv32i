@@ -105,7 +105,7 @@ inst_t inst_decode (word_t inst) {
     break;
 
     default:
-    debug_log("unknown opcode %llx", inst);
+    debug_log("unknown opcode %x", inst);
     assert(0);
   }
   return res;

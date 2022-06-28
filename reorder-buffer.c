@@ -94,7 +94,8 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
                              clk_t *clk) {
-  rob_unit_t *unit = (rob_unit_t *) unit;
+  rob_unit_t *unit =
+    (rob_unit_t *) malloc(sizeof(rob_unit_t));
   unit->reg_store = regs;
   unit->ls_queue = queue;
   unit->inst_unit = inst_unit;
@@ -113,9 +114,9 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
 }
 void rob_unit_free (rob_unit_t *unit) {
   for (int i = 0; i < ROB_CAPACITY; ++i) {
-    reorder_buffer_t *buf =
-      (reorder_buffer_t *) queue_id(unit->robs, i);
-    reg_mut_free(buf->payload);
+    reg_mut_t *reg = rm_read(queue_id(unit->robs, i),
+                             reorder_buffer_t)->payload;
+    reg_mut_free(reg);
   }
   queue_free(unit->robs);
   free(unit);

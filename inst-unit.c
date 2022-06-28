@@ -5,6 +5,7 @@
 #include "inst-unit.h"
 #include "inst.h"
 #include "lib/closure.h"
+#include "lib/log.h"
 #include "memory.h"
 #include "reg.h"
 #include "reorder-buffer.h"
@@ -24,10 +25,12 @@ void _inst_unit_tick (void *state, ...) {
     rm_write(unit->force_pc, struct _inst_unit_force_pc)
       .busy = false;
     rm_write(unit->pc, addr_t) = rec.addr;
+    debug_log("force PC: %x", rec.addr);
     return;
   }
   if (rob_unit_full(unit->rob_unit)) return;
   addr_t pc = *rm_read(unit->pc, addr_t);
+  debug_log("PC: %x", pc);
   word_t inst_bin = mem_get_inst(unit->mem, pc);
   inst_t inst = inst_decode(inst_bin);
   rs_type_t type = inst_type(inst);
@@ -48,6 +51,8 @@ inst_unit_t *inst_unit_create (memory_t *mem,
   inst_unit_t *unit =
     (inst_unit_t *) malloc(sizeof(inst_unit_t));
   unit->pc = reg_mut_create(sizeof(addr_t), clk);
+  unit->force_pc =
+    reg_mut_create(sizeof(struct _inst_unit_force_pc), clk);
   unit->mem = mem;
   unit->rs_unit = rs_unit;
   unit->reg_store = reg_store;
@@ -60,6 +65,7 @@ inst_unit_t *inst_unit_create (memory_t *mem,
 }
 void inst_unit_free (inst_unit_t *unit) {
   reg_mut_free(unit->pc);
+  reg_mut_free(unit->force_pc);
   free(unit);
 }
 
