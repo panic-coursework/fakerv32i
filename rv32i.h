@@ -24,6 +24,7 @@ typedef enum ls_op_t {
 
 typedef __uint8_t byte_t;
 typedef __uint32_t word_t;
+typedef __int32_t signed_word_t;
 typedef word_t addr_t;
 typedef int rs_id_t;
 typedef int reg_id_t;
