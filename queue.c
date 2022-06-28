@@ -4,7 +4,7 @@
 #include "reg.h"
 #include "rv32i.h"
 
-void _queue_tick (void *state, ...) {
+void _queue_tick (void *state, va_list args) {
   queue_t *queue = (queue_t *) state;
   if (*rm_read(queue->clear, bool)) {
     rm_write(queue->clear, bool) = false;

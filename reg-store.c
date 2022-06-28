@@ -34,6 +34,7 @@ reg_mut_t *reg_store_rob_id (reg_store_t *reg, reg_id_t id) {
   return reg->rob_id[id];
 }
 void reg_file_clear (reg_store_t *reg) {
+  // TODO!: stall for a clk cycle
   for (int i = 0; i < REG_COUNT; ++i) {
     rm_write(reg->rob_id[i], rob_id_t) = 0;
   }

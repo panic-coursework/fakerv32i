@@ -9,11 +9,11 @@
 struct reg_t {
   size_t size;
   void *buf;
-  void *next;
   closure_t *update;
 };
 
-reg_t *reg_create (size_t size, closure_t *update, clk_t *clk);
+reg_t *reg_create (size_t size, closure_t *update,
+                   clk_t *clk);
 void reg_free (reg_t *reg);
 
 const void *reg_read (reg_t *reg);
@@ -27,6 +27,7 @@ struct reg_mut_t {
   void *next;
   int write_count;
   bool allow_multiwrite;
+  bool clear;
 };
 
 reg_mut_t *reg_mut_create (size_t size, clk_t *clk);

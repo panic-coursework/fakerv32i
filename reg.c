@@ -10,12 +10,9 @@
 #include "lib/log.h"
 #include "rv32i.h"
 
-void _reg_tick (void *_reg, ...) {
+void _reg_tick (void *_reg, va_list args) {
   reg_t *reg = (reg_t *) _reg;
-  void *tmp = reg->buf;
-  reg->buf = reg->next;
-  reg->next = tmp;
-  closure_call(reg->update, reg->next);
+  closure_call(reg->update, reg->buf);
 }
 
 reg_t *reg_create (size_t size, closure_t *update,
@@ -23,10 +20,10 @@ reg_t *reg_create (size_t size, closure_t *update,
   reg_t *reg = (reg_t *) malloc(sizeof(reg_t));
   reg->size = size;
   reg->buf = calloc(1, size);
-  reg->next = calloc(1, size);
   reg->update = update;
 
-  clk_add_callback(clk, closure_create(_reg_tick, reg));
+  closure_t *cb = closure_create(_reg_tick, reg);
+  clk_add_reg(clk, cb);
 
   return reg;
 }
@@ -34,7 +31,6 @@ reg_t *reg_create (size_t size, closure_t *update,
 void reg_free (reg_t *reg) {
   closure_free(reg->update);
   free(reg->buf);
-  free(reg->next);
   free(reg);
 }
 
@@ -45,9 +41,12 @@ void *reg_write (reg_t *reg) {
   return reg->buf;
 }
 
-void _reg_mut_tick (void *_reg, ...) {
+void _reg_mut_tick (void *_reg, va_list args) {
   reg_mut_t *reg = (reg_mut_t *) _reg;
   memcpy(reg->buf, reg->next, reg->size);
+  if (reg->clear) {
+    memset(reg->next, 0, reg->size);
+  }
   reg->write_count = 0;
 }
 
@@ -58,8 +57,9 @@ reg_mut_t *reg_mut_create (size_t size, clk_t *clk) {
   reg->next = calloc(1, size);
   reg->write_count = 0;
   reg->allow_multiwrite = false;
+  reg->clear = false;
 
-  clk_add_callbefore(clk, closure_create(_reg_mut_tick, reg));
+  clk_add_regmut(clk, closure_create(_reg_mut_tick, reg));
 
   return reg;
 }
@@ -79,11 +79,9 @@ void *reg_mut_write (reg_mut_t *reg) {
   return reg->next;
 }
 
-void _reg_reduce_tick (void *_reg, ...) {
+void _reg_reduce_tick (void *_reg, va_list args) {
   reg_reduce_t *reg = (reg_reduce_t *) _reg;
-  void *tmp = reg->buf;
-  reg->buf = reg->next;
-  reg->next = tmp;
+  memcpy(reg->buf, reg->next, reg->size);
   memcpy(reg->next, reg->init, reg->size);
 }
 reg_reduce_t *reg_reduce_create (size_t size,
@@ -97,7 +95,7 @@ reg_reduce_t *reg_reduce_create (size_t size,
   reg->next = calloc(1, size);
   reg->reducer = reducer;
 
-  clk_add_callbefore(clk, closure_create(_reg_reduce_tick, reg));
+  clk_add_regmut(clk, closure_create(_reg_reduce_tick, reg));
 
   return reg;
 }
@@ -117,13 +115,10 @@ void reg_reduce_write (reg_reduce_t *reg,
   closure_call(reg->reducer, reg->next, update);
 }
 
-void _reg_or_reduce (void *state, ...) {
+void _reg_or_reduce (void *state, va_list args) {
   reg_reduce_t *reg = (reg_reduce_t *) state;
-  va_list args;
-  va_start(args, state);
   bool *prev = va_arg(args, bool *);
   bool *curr = va_arg(args, bool *);
-  va_end(args);
 
   *prev = *prev || *curr;
 }
@@ -135,7 +130,7 @@ reg_reduce_t *reg_or_create (clk_t *clk) {
   return reg;
 }
 
-void _busy_wait_tick (void *state, ...) {
+void _busy_wait_tick (void *state, va_list args) {
   busy_wait_t *reg = (busy_wait_t *) state;
   if (!rr_read(reg->stall, bool)) return;
   if (!rm_read(reg->signal, bool)) busy_wait(reg);

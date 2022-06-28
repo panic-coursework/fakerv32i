@@ -7,6 +7,8 @@
 #include "clk.h"
 #include "cpu.h"
 #include "inst-unit.h"
+#include "lib/closure.h"
+#include "lib/log.h"
 #include "ls-queue.h"
 #include "memory.h"
 #include "reg-store.h"
@@ -15,6 +17,13 @@
 #include "rv32i.h"
 
 bool hcf = false;
+
+void _cpu_debug_cdb (void *state, va_list args) {
+  cpu_t *cpu = (cpu_t *) state;
+  cdb_message_t *msg = va_arg(args, cdb_message_t *);
+  debug_log("cdb tick %ld: rob #%d received value %08x",
+            clk_get(cpu->clk), msg->rob, msg->result);
+}
 
 cpu_t *cpu_create () {
   cpu_t *cpu = (cpu_t *) malloc(sizeof(cpu_t));
@@ -49,6 +58,9 @@ cpu_t *cpu_create () {
     rs_unit_add(cpu->rs,
       rs_create(i, RS_STORE_BUFFER, cdb, clk));
   }
+
+  // debug cdb
+  bus_listen(cdb, closure_create(_cpu_debug_cdb, cpu));
 
   return cpu;
 }

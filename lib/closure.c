@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-closure_t *closure_create (void (*call)(void *, ...),
+closure_t *closure_create (void (*call)(void *, va_list),
                            void *data) {
   closure_t *closure =
     (closure_t *) malloc(sizeof(closure_t));

@@ -15,7 +15,7 @@ typedef struct _alu_result_buf_t {
   bool busy;
 } _alu_result_buf_t;
 // TODO: test
-void _alu_tick (void *state, ...) {
+void _alu_tick (void *state, va_list args) {
   alu_t *alu = (alu_t *) state;
   _alu_result_buf_t buf =
     *rm_read(alu->result_buf, _alu_result_buf_t);

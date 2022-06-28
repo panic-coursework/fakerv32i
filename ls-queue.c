@@ -10,7 +10,7 @@
 
 #define LS_QUEUE_CAPACITY 8
 
-void _ls_queue_tick (void *state, ...) {
+void _ls_queue_tick (void *state, va_list args) {
   ls_queue_t *queue = (ls_queue_t *) state;
   if (queue_empty(queue->queue)) return;
   if (busy_wait_should_stall(queue->lock)) return;

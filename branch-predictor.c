@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "branch-predictor.h"
+#include "lib/log.h"
 #include "rv32i.h"
 
 branch_predictor_t *bp_create (clk_t *clk) {
@@ -14,6 +15,7 @@ void bp_free (branch_predictor_t *bp) {
 
 bool branch_predict (branch_predictor_t *bp) {
   // TODO
+  debug_log("prediction: branches!");
   return true;
 }
 

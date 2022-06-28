@@ -9,7 +9,7 @@
 struct bus_arbitrator_t {
   vector_t *req; // request
   reg_t *gnt;    // grant
-  reg_t *fire;   // bool, true if has data on this tick
+  reg_mut_t *fire;   // bool, true if has data on this tick
 };
 
 struct bus_t {

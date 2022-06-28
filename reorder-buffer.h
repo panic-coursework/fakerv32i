@@ -19,7 +19,6 @@ struct rob_payload_t {
   // for ROB_BRANCH
   addr_t fallback;
   bool predicted_take;
-  bool actual_take;
   // for ROB_JALR
   addr_t predicted_addr;
 };

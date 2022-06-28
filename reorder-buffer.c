@@ -20,9 +20,9 @@
 
 bool _rob_is_mispredicted (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) {
-    return payload.predicted_take == payload.actual_take;
+    return payload.predicted_take != payload.value;
   } else if (payload.op == ROB_JALR) {
-    return payload.predicted_addr == payload.addr;
+    return payload.predicted_addr != payload.addr;
   }
   debug_log("bad payload op %d", payload.op);
   assert(false);
@@ -90,7 +90,7 @@ void _rob_commit (const reorder_buffer_t *rob,
     queue_pop(unit->robs);
   }
 }
-void _rob_unit_tick (void *state, ...) {
+void _rob_unit_tick (void *state, va_list args) {
   rob_unit_t *unit = (rob_unit_t *) state;
   if (queue_empty(unit->robs)) return;
   const reorder_buffer_t *rob =
@@ -98,11 +98,8 @@ void _rob_unit_tick (void *state, ...) {
   if (!*rm_read(rob->ready, bool)) return;
   _rob_commit(rob, unit);
 }
-void _rob_onmsg (void *state, ...) {
-  va_list args; va_start(args, state);
+void _rob_onmsg (void *state, va_list args) {
   cdb_message_t *msg = va_arg(args, cdb_message_t *);
-  va_end(args);
-  
   reorder_buffer_t *buf = (reorder_buffer_t *) state;
   if (msg->rob == buf->id) {
     rm_write(buf->payload, rob_payload_t).value =

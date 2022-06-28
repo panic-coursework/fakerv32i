@@ -33,7 +33,7 @@ word_t _mem_get_sz (memory_t *mem, addr_t addr,
     assert(0);
   }
 }
-void _mem_tick (void *state, ...) {
+void _mem_tick (void *state, va_list args) {
   memory_t *mem = (memory_t *) state;
   bool cdb_sent = false;
   // load

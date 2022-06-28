@@ -17,7 +17,7 @@ struct _inst_unit_force_pc {
   addr_t addr;
 };
 
-void _inst_unit_tick (void *state, ...) {
+void _inst_unit_tick (void *state, va_list args) {
   inst_unit_t *unit = (inst_unit_t *) state;
   struct _inst_unit_force_pc rec =
     *rm_read(unit->force_pc, struct _inst_unit_force_pc);

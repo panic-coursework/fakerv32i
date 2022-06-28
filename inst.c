@@ -129,7 +129,7 @@ rob_op_t inst_rob_op (inst_t inst) {
   opcodes_t opcode = (opcodes_t) inst.op & OPCODE_MASK;
   switch (opcode) {
     case OPC_STORE: return ROB_STORE;
-    case OPC_JAL: case OPC_BRANCH: return ROB_BRANCH;
+    case OPC_BRANCH: return ROB_BRANCH;
     case OPC_JALR: return ROB_JALR;
     default: return ROB_REGISTER;
   }

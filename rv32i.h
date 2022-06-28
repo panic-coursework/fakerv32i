@@ -32,6 +32,7 @@ typedef int reg_id_t;
 typedef int rob_id_t;
 
 typedef struct clk_t clk_t;
+typedef struct wire_t wire_t;
 typedef struct reg_t reg_t;
 typedef struct reg_mut_t reg_mut_t;
 typedef struct reg_reduce_t reg_reduce_t;

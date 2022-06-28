@@ -18,10 +18,8 @@
 #include "rv32i.h"
 #include "rvmath.h"
 
-void _rs_onmsg (void *state, ...) {
-  va_list args; va_start(args, state);
+void _rs_onmsg (void *state, va_list args) {
   cdb_message_t *msg = va_arg(args, cdb_message_t *);
-  va_end(args);
   reservation_station_t *rs = (reservation_station_t *) state;
   if (!*rm_read(rs->busy, bool)) return;
   rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
@@ -71,7 +69,7 @@ void _rsu_clear (vector_t *rss) {
     rm_write(rs->busy, bool) = false;
   }
 }
-void _rs_unit_tick (void *state, ...) {
+void _rs_unit_tick (void *state, va_list args) {
   rs_unit_t *unit = (rs_unit_t *) state;
   if (*rm_read(unit->clear, bool)) {
     rm_write(unit->clear, bool) = false;

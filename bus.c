@@ -12,32 +12,25 @@
 #include "rv32i.h"
 
 // TODO: improve arbitration algorithm
-void _bus_arb (void *state, ...) {
-  va_list args;
-  va_start(args, state);
+void _bus_arb (void *state, va_list args) {
   size_t *gnt = va_arg(args, size_t *);
   *gnt = 0;
 
   bus_t *bus = (bus_t *) state;
   reg_mut_t *reg;
-  vector_foreach(bus->arbitrator.req, i, reg) {
+  vector_foreach (bus->arbitrator.req, i, reg) {
     if (*rm_read(reg, bool)) {
       *gnt = i + 1;
       break;
     }
   }
 }
-void _bus_fire (void *state, ...) {
-  va_list args;
-  va_start(args, state);
-  bool *fire = va_arg(args, bool *);
-  bus_t *bus = (bus_t *) state;
-  *fire = *r_read(bus->arbitrator.gnt, size_t) != 0;
-}
 
-void _bus_tick (void *state, ...) {
+void _bus_tick (void *state, va_list args) {
   bus_t *bus = (bus_t *) state;
-  if (*r_read(bus->arbitrator.fire, bool)) {
+  rm_write(bus->arbitrator.fire, bool) =
+    *r_read(bus->arbitrator.gnt, size_t) != 0;
+  if (*rm_read(bus->arbitrator.fire, bool)) {
     closure_t *callback;
     const void *data = rm_read(bus->data, void);
     vector_foreach(bus->listeners, i, callback) {
@@ -50,8 +43,7 @@ bus_t *bus_create (size_t size, clk_t *clk) {
   bus->arbitrator.req = vector_create();
   bus->arbitrator.gnt = reg_create(sizeof(size_t),
     closure_create(_bus_arb, bus), clk);
-  bus->arbitrator.fire = reg_create(sizeof(bool),
-    closure_create(_bus_fire, bus), clk);
+  bus->arbitrator.fire = reg_mut_create(sizeof(bool), clk);
   bus->data = reg_mut_create(size, clk);
   bus->size = size;
   bus->clk = clk;
@@ -69,7 +61,7 @@ void bus_free (bus_t *bus) {
   }
   vector_free(bus->arbitrator.req);
   reg_free(bus->arbitrator.gnt);
-  reg_free(bus->arbitrator.fire);
+  reg_mut_free(bus->arbitrator.fire);
   reg_mut_free(bus->data);
   closure_t *cb;
   vector_foreach (bus->listeners, i, cb) {
@@ -81,12 +73,13 @@ void bus_free (bus_t *bus) {
 
 size_t bus_arb_add (bus_t *bus) {
   reg_mut_t *req = reg_mut_create(sizeof(bool), bus->clk);
+  req->clear = true;
   size_t id = vector_push(bus->arbitrator.req, req);
   return id;
 }
 
 void bus_arb_req (bus_t *bus, size_t id) {
-  reg_mut_t *req = &v_read(bus->arbitrator.req, id,
+  reg_mut_t *req = &v_read(bus->arbitrator.req, id - 1,
                            reg_mut_t);
   rm_write(req, bool) = true;
 }
@@ -95,7 +88,7 @@ bool bus_arb_status (bus_t *bus, size_t id) {
 }
 
 const void *bus_get_data (bus_t *bus) {
-  if (!*r_read(bus->arbitrator.fire, bool)) return NULL;
+  if (!*rm_read(bus->arbitrator.fire, bool)) return NULL;
   return rm_read(bus->data, void);
 }
 void bus_listen (bus_t *bus, closure_t *callback) {
@@ -106,7 +99,7 @@ void bus_listen (bus_t *bus, closure_t *callback) {
 bool _bh_busy (bus_helper_t *bh, int id) {
   return *rr_read(bh->busy[id], bool);
 }
-void _bh_tick (void *state, ...) {
+void _bh_tick (void *state, va_list args) {
   bus_helper_t *bh = (bus_helper_t *) state;
   bool requested = false;
   int curr = *rm_read(bh->current, int);
@@ -148,6 +141,9 @@ bus_helper_t *bh_create (bus_t *bus) {
   bh->current = reg_mut_create(sizeof(int), bus->clk);
   bh->bus = bus;
   bh->id = bus_arb_add(bus);
+
+  clk_add_callback(bus->clk, closure_create(_bh_tick, bh));
+
   return bh;
 }
 void bh_free (bus_helper_t *bh) {
