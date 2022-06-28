@@ -37,7 +37,7 @@ void _bus_fire (void *state, ...) {
 
 void _bus_tick (void *state, ...) {
   bus_t *bus = (bus_t *) state;
-  if (r_read(bus->arbitrator.fire, bool)) {
+  if (*r_read(bus->arbitrator.fire, bool)) {
     closure_t *callback;
     const void *data = rm_read(bus->data, void);
     vector_foreach(bus->listeners, i, callback) {

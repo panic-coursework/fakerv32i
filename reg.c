@@ -73,7 +73,7 @@ const void *reg_mut_read (reg_mut_t *reg) {
   return reg->buf;
 }
 void *reg_mut_write (reg_mut_t *reg) {
-  if (++reg->write_count > 1 && !reg->allow_multiwrite) {
+  if (++(reg->write_count) > 1 && !reg->allow_multiwrite) {
     debug_log("reg_mut_write called more than once!");
   }
   return reg->next;

@@ -44,6 +44,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
                              ls_queue_t *queue,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
+                             bus_t *cdb,
                              clk_t *clk);
 void rob_unit_free (rob_unit_t *rob_unit);
 

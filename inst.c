@@ -39,6 +39,8 @@ word_t _inst_jal_imm (word_t inst);
 word_t _inst_branch_imm (word_t inst);
 word_t _inst_store_imm (word_t inst);
 
+#define INST_MAGIC_HCF 0x0ff00513u
+
 inst_t inst_decode (word_t inst) {
   opcodes_t opcode = (opcodes_t) _inst_get(inst, OPCODE);
   word_t funct3 = _inst_get(inst, FUNCT3);
@@ -105,13 +107,15 @@ inst_t inst_decode (word_t inst) {
     break;
 
     default:
-    debug_log("unknown opcode %x", inst);
+    debug_log("unknown opcode %08x", inst);
     assert(0);
   }
+  if (inst == INST_HCF) res.op = INST_HCF;
   return res;
 }
 
 rs_type_t inst_type (inst_t inst) {
+  if (inst.op == INST_HCF) return RS_RESERVATION_STATION;
   opcodes_t opcode = (opcodes_t) inst.op & OPCODE_MASK;
   switch (opcode) {
     case OPC_LOAD: return RS_LOAD_BUFFER;
@@ -121,6 +125,7 @@ rs_type_t inst_type (inst_t inst) {
 }
 
 rob_op_t inst_rob_op (inst_t inst) {
+  if (inst.op == INST_HCF) return ROB_HCF;
   opcodes_t opcode = (opcodes_t) inst.op & OPCODE_MASK;
   switch (opcode) {
     case OPC_STORE: return ROB_STORE;
@@ -132,6 +137,7 @@ rob_op_t inst_rob_op (inst_t inst) {
 
 #define BRANCH_MASK 0b10000
 alu_op_t inst_alu_op (inst_t inst) {
+  if (inst.op == INST_HCF) return ALU_ADD;
   return inst.op >> OPCODE_SIZE |
         (inst.opcode == OPC_BRANCH ? BRANCH_MASK : 0);
 }

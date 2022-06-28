@@ -24,6 +24,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
                       inst_t inst,
                       addr_t pc) {
   addr_t next_pc = pc + INST_SIZE;
+
   rm_write(rs->busy, bool) = true;
   rm_write(rob->ready, bool) = false;
   rob_payload_t *rob_data =
@@ -66,7 +67,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
       data->src2 = 0;
       data->value2 = inst.immediate;
     } else {
-      assert(inst.opcode == OPC_IMM);
+      assert(inst.opcode == OPC_IMM || inst.op == INST_HCF);
       data->value1 = inst.immediate;
       data->src1 = 0;
       _inst_reg_set(unit, inst.rs1, &data->src2, &data->value2);

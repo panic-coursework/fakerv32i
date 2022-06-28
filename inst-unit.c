@@ -25,20 +25,28 @@ void _inst_unit_tick (void *state, ...) {
     rm_write(unit->force_pc, struct _inst_unit_force_pc)
       .busy = false;
     rm_write(unit->pc, addr_t) = rec.addr;
-    debug_log("force PC: %x", rec.addr);
+    debug_log("force PC: %08x", rec.addr);
     return;
   }
-  if (rob_unit_full(unit->rob_unit)) return;
+  if (rob_unit_full(unit->rob_unit)) {
+    debug_log("instruction unit stall due to rob full!");
+    return;
+  }
   addr_t pc = *rm_read(unit->pc, addr_t);
-  debug_log("PC: %x", pc);
   word_t inst_bin = mem_get_inst(unit->mem, pc);
   inst_t inst = inst_decode(inst_bin);
+  debug_log("PC: %08x, inst: %08x, op: %08x", pc, inst_bin,
+            inst.op);
   rs_type_t type = inst_type(inst);
   reservation_station_t *rs =
     rs_unit_acquire(unit->rs_unit, type);
-  if (!rs) return;
+  if (!rs) {
+    debug_log("instruction unit stall due to rs full!");
+    return;
+  }
   reorder_buffer_t *rob = rob_unit_acquire(unit->rob_unit);
   addr_t next = inst_dispatch(unit, rs, rob, inst, pc);
+  debug_log("next PC: %08x", next);
   rm_write(unit->pc, addr_t) = next;
 }
 

@@ -14,6 +14,8 @@
 #include "reservation-station.h"
 #include "rv32i.h"
 
+bool hcf = false;
+
 cpu_t *cpu_create () {
   cpu_t *cpu = (cpu_t *) malloc(sizeof(cpu_t));
   clk_t *clk = cpu->clk = clk_create();
@@ -29,8 +31,25 @@ cpu_t *cpu_create () {
     inst_unit_create(mem, cpu->rs, cpu->reg_store,
                      cpu->branch_predictor, cdb, clk);
   cpu->rob = rob_unit_create(cpu->reg_store, cpu->ls_queue,
-                             cpu->inst_unit, cpu->rs, clk);
+                             cpu->inst_unit, cpu->rs, cdb,
+                             clk);
   cpu->rs->rob_unit = cpu->inst_unit->rob_unit = cpu->rob;
+
+  // add reservation stations
+  int i = 1;
+  for (; i < 8; ++i) {
+    rs_unit_add(cpu->rs,
+      rs_create(i, RS_RESERVATION_STATION, cdb, clk));
+  }
+  for (; i < 16; ++i) {
+    rs_unit_add(cpu->rs,
+      rs_create(i, RS_LOAD_BUFFER, cdb, clk));
+  }
+  for (; i < 24; ++i) {
+    rs_unit_add(cpu->rs,
+      rs_create(i, RS_STORE_BUFFER, cdb, clk));
+  }
+
   return cpu;
 }
 void cpu_free (cpu_t *cpu) {

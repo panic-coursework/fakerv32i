@@ -54,6 +54,9 @@ enum inst_op_t {
 
   INST_JALR = 0b1100111,
   INST_JAL  = 0b1101111,
+
+  // Halt and Catch Fire
+  INST_HCF  = 0xfee1dead,
 };
 typedef enum inst_op_t inst_op_t;
 

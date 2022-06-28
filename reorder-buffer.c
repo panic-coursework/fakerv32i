@@ -1,8 +1,12 @@
 #include <assert.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "clk.h"
 #include "reorder-buffer.h"
+#include "bus.h"
+#include "lib/closure.h"
 #include "inst-unit.h"
 #include "ls-queue.h"
 #include "reg-store.h"
@@ -66,6 +70,11 @@ void _rob_commit (const reorder_buffer_t *rob,
     }
     break;
 
+    case ROB_HCF:
+    hcf = true;
+    success = false;
+    break;
+
     default:
     debug_log("unknown rob op %d", data->op);
     assert(false);
@@ -89,10 +98,23 @@ void _rob_unit_tick (void *state, ...) {
   if (!*rm_read(rob->ready, bool)) return;
   _rob_commit(rob, unit);
 }
+void _rob_onmsg (void *state, ...) {
+  va_list args; va_start(args, state);
+  cdb_message_t *msg = va_arg(args, cdb_message_t *);
+  va_end(args);
+  
+  reorder_buffer_t *buf = (reorder_buffer_t *) state;
+  if (msg->rob == buf->id) {
+    rm_write(buf->payload, rob_payload_t).value =
+      msg->result;
+    rm_write(buf->ready, bool) = true;
+  }
+}
 rob_unit_t *rob_unit_create (reg_store_t *regs,
                              ls_queue_t *queue,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
+                             bus_t *cdb,
                              clk_t *clk) {
   rob_unit_t *unit =
     (rob_unit_t *) malloc(sizeof(rob_unit_t));
@@ -106,17 +128,22 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
     reorder_buffer_t *buf =
       &rm_write(queue_id(unit->robs, i), reorder_buffer_t);
     buf->id = i + 1;
+    buf->ready = reg_mut_create(sizeof(bool), clk);
     buf->payload =
       reg_mut_create(sizeof(rob_payload_t), clk);
+    bus_listen(cdb, closure_create(_rob_onmsg, buf));
   }
-  // TODO: cdb related business
+
+  clk_add_callback(clk, closure_create(_rob_unit_tick, unit));
+
   return unit;
 }
 void rob_unit_free (rob_unit_t *unit) {
   for (int i = 0; i < ROB_CAPACITY; ++i) {
-    reg_mut_t *reg = rm_read(queue_id(unit->robs, i),
-                             reorder_buffer_t)->payload;
-    reg_mut_free(reg);
+    const reorder_buffer_t *rob =
+      rm_read(queue_id(unit->robs, i), reorder_buffer_t);
+    reg_mut_free(rob->ready);
+    reg_mut_free(rob->payload);
   }
   queue_free(unit->robs);
   free(unit);

@@ -46,12 +46,8 @@ rs_unit_t *rs_unit_create (alu_pool_t *alu_pool,
                            ls_queue_t *queue, clk_t *clk);
 void rs_unit_free (rs_unit_t *rs);
 
-void rs_unit_add_alu_station (rs_unit_t *unit,
-                              reservation_station_t *rs);
-void rs_unit_add_load_buffer (rs_unit_t *unit,
-                              reservation_station_t *rs);
-void rs_unit_add_store_buffer (rs_unit_t *unit,
-                               reservation_station_t *rs);
+void rs_unit_add (rs_unit_t *unit,
+                  reservation_station_t *rs);
 
 reservation_station_t *rs_unit_acquire (rs_unit_t *unit,
                                         rs_type_t type);

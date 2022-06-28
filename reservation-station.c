@@ -219,7 +219,7 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
   if (ls_queue_full(unit->ls_queue)) return;
   reservation_station_t *rs;
   vector_foreach (rss, i, rs) {
-    assert(rs->type == RS_LOAD_BUFFER);
+    assert(rs->type == RS_STORE_BUFFER);
     if (!*rm_read(rs->busy, bool)) continue;
     rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
     if (data.src1 == 0 || data.src2 == 0) {
@@ -239,6 +239,7 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
       rm_write(rob->payload, rob_payload_t) = old;
       if (data.src1 == 0 && data.src2 == 0) {
         rm_write(rs->busy, bool) = false;
+        rm_write(rob->ready, bool) = true;
       }
       // write one rob entry at a time
       break;

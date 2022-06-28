@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 #define REG_COUNT 32
@@ -108,4 +109,7 @@ typedef enum rob_op_t {
   ROB_STORE,
   ROB_BRANCH,
   ROB_JALR,
+  ROB_HCF,
 } rob_op_t;
+
+extern bool hcf;
