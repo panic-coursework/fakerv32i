@@ -12,8 +12,9 @@ struct reg_store_t {
 reg_store_t *reg_store_create (clk_t *clk);
 void reg_store_free (reg_store_t *reg);
 
-word_t reg_store_get (reg_store_t *reg, int id);
-void reg_store_set (reg_store_t *reg, int id, word_t value);
+word_t reg_store_get (reg_store_t *reg, reg_id_t id);
+void reg_store_set (reg_store_t *reg, reg_id_t id,
+                    word_t value);
 
-reg_mut_t *reg_store_rob_id (reg_store_t *reg, int id);
+reg_mut_t *reg_store_rob_id (reg_store_t *reg, reg_id_t id);
 void reg_file_clear (reg_store_t *reg);

@@ -8,6 +8,7 @@ struct inst_unit_t {
   memory_t *mem;
   rs_unit_t *rs_unit;
   rob_unit_t *rob_unit;
+  branch_predictor_t *branch_predictor;
   reg_store_t *reg_store;
   bus_t *cdb;
 };
@@ -16,6 +17,7 @@ inst_unit_t *inst_unit_create (memory_t *mem,
                                rs_unit_t *rs_unit,
                                rob_unit_t *rob_unit,
                                reg_store_t *reg_store,
+                               branch_predictor_t *bp,
                                bus_t *cdb,
                                clk_t *clk);
 void inst_unit_free (inst_unit_t *unit);

@@ -19,3 +19,9 @@ int ls_size (ls_size_t size) {
     assert(0);
   }
 }
+
+word_t signed_add (word_t base, word_t dx) {
+  // add them directly since the numbers are already in
+  // 2's complement format.
+  return base + dx;
+}

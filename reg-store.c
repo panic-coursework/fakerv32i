@@ -20,16 +20,17 @@ void reg_store_free (reg_store_t *reg) {
   free(reg);
 }
 
-word_t reg_store_get (reg_store_t *reg, int id) {
+word_t reg_store_get (reg_store_t *reg, reg_id_t id) {
   if (id == 0) return 0;
   return *rm_read(reg->registers[id], word_t);
 }
-void reg_store_set (reg_store_t *reg, int id, word_t value) {
+void reg_store_set (reg_store_t *reg, reg_id_t id,
+                    word_t value) {
   if (id == 0) return;
   rm_write(reg->registers[id], word_t) = value;
 }
 
-reg_mut_t *reg_store_rob_id (reg_store_t *reg, int id) {
+reg_mut_t *reg_store_rob_id (reg_store_t *reg, reg_id_t id) {
   return reg->rob_id[id];
 }
 void reg_file_clear (reg_store_t *reg) {

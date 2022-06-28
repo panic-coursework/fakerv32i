@@ -57,6 +57,16 @@ enum inst_op_t {
 };
 typedef enum inst_op_t inst_op_t;
 
+enum inst_format_t {
+  IF_I,
+  IF_U,
+  IF_R,
+  IF_J,
+  IF_B,
+  IF_S,
+};
+typedef enum inst_format_t inst_format_t;
+
 // opcodes
 enum opcodes_t {
   OPC_LOAD   = 0b0000011,
@@ -73,6 +83,8 @@ typedef enum opcodes_t opcodes_t;
 
 struct inst_t {
   inst_op_t op;
+  opcodes_t opcode;
+  inst_format_t format;
   word_t immediate;
   reg_id_t rs1, rs2;
   reg_id_t rd;
@@ -81,3 +93,6 @@ struct inst_t {
 
 inst_t inst_decode (word_t inst);
 rs_type_t inst_type (inst_t inst);
+rob_op_t inst_rob_op (inst_t inst);
+alu_op_t inst_alu_op (inst_t inst);
+ls_size_t inst_ls_op (inst_t inst);

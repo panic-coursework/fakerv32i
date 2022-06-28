@@ -222,15 +222,26 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
     assert(rs->type == RS_LOAD_BUFFER);
     if (!*rm_read(rs->busy, bool)) continue;
     rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
-    if (data.src1 != 0 || data.src2 != 0) continue;
-    addr_t addr = _rs_calc_addr(data);
-    const reorder_buffer_t *rob =
-      rob_unit_find(unit->rob_unit, data.dest);
-    rob_payload_t old =
-      *rm_read(rob->payload, rob_payload_t);
-    old.addr_ready = true;
-    old.addr = addr;
-    old.value_ready = true;
-    old.value = data.value2;
+    if (data.src1 == 0 || data.src2 == 0) {
+      const reorder_buffer_t *rob =
+        rob_unit_find(unit->rob_unit, data.dest);
+      rob_payload_t old =
+        *rm_read(rob->payload, rob_payload_t);
+      if (old.addr_ready && old.value_ready) continue;
+      if (!old.addr_ready && data.src1 == 0) {
+        old.addr = _rs_calc_addr(data);
+        old.addr_ready = true;
+      }
+      if (!old.value_ready && data.src2 == 0) {
+        old.value = data.value2;
+        old.value_ready = true;
+      }
+      rm_write(rob->payload, rob_payload_t) = old;
+      if (data.src1 == 0 && data.src2 == 0) {
+        rm_write(rs->busy, bool) = false;
+      }
+      // write one rob entry at a time
+      break;
+    }
   }
 }

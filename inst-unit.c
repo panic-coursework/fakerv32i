@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "clk.h"
+#include "inst-dispatch.h"
 #include "inst-unit.h"
 #include "inst.h"
 #include "lib/closure.h"
@@ -14,11 +15,6 @@ struct _inst_unit_force_pc {
   bool busy;
   addr_t addr;
 };
-
-addr_t _inst_dispatch (inst_unit_t *unit,
-                       reservation_station_t *rs,
-                       reorder_buffer_t *rob,
-                       inst_t inst);
 
 void _inst_unit_tick (void *state, ...) {
   inst_unit_t *unit = (inst_unit_t *) state;
@@ -39,7 +35,7 @@ void _inst_unit_tick (void *state, ...) {
     rs_unit_acquire(unit->rs_unit, type);
   if (!rs) return;
   reorder_buffer_t *rob = rob_unit_acquire(unit->rob_unit);
-  addr_t next = _inst_dispatch(unit, rs, rob, inst);
+  addr_t next = inst_dispatch(unit, rs, rob, inst, pc);
   rm_write(unit->pc, addr_t) = next;
 }
 
@@ -47,6 +43,7 @@ inst_unit_t *inst_unit_create (memory_t *mem,
                                rs_unit_t *rs_unit,
                                rob_unit_t *rob_unit,
                                reg_store_t *reg_store,
+                               branch_predictor_t *bp,
                                bus_t *cdb,
                                clk_t *clk) {
   inst_unit_t *unit =
@@ -56,6 +53,7 @@ inst_unit_t *inst_unit_create (memory_t *mem,
   unit->rs_unit = rs_unit;
   unit->rob_unit = rob_unit;
   unit->reg_store = reg_store;
+  unit->branch_predictor = bp;
   unit->cdb = cdb;
 
   clk_add_callback(clk, closure_create(_inst_unit_tick, unit));
@@ -65,14 +63,6 @@ inst_unit_t *inst_unit_create (memory_t *mem,
 void inst_unit_free (inst_unit_t *unit) {
   reg_mut_free(unit->pc);
   free(unit);
-}
-
-addr_t _inst_dispatch (inst_unit_t *unit,
-                       reservation_station_t *rs,
-                       reorder_buffer_t *rob,
-                       inst_t inst) {
-  // TODO
-  // TODO: see if cdb has some data we need
 }
 
 void inst_unit_force_pc (inst_unit_t *unit, addr_t pc) {

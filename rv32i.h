@@ -57,6 +57,7 @@ typedef struct bus_helper_t bus_helper_t;
 typedef struct cdb_message_t cdb_message_t;
 typedef struct ls_queue_t ls_queue_t;
 typedef struct ls_queue_payload_t ls_queue_payload_t;
+typedef struct branch_predictor_t branch_predictor_t;
 
 #define swap(x, y, type) \
   {                      \
@@ -74,8 +75,14 @@ enum alu_op_t {
   ALU_SRL,
   ALU_OR,
   ALU_AND, // 0b111
-  ALU_SUB = 0b1000,
-  ALU_SRA = 0b1101,
+  ALU_SUB  = 0b01000,
+  ALU_SRA  = 0b01101,
+  ALU_BEQ  = 0b10000,
+  ALU_BNE  = 0b10001,
+  ALU_BLT  = 0b10100,
+  ALU_BGE  = 0b10101,
+  ALU_BLTU = 0b10110,
+  ALU_BGEU = 0b10111,
 };
 typedef enum alu_op_t alu_op_t;
 
