@@ -43,6 +43,7 @@ void _alu_tick (void *state, va_list args) {
       buf.msg = msg;
       buf.busy = true;
       rm_write(alu->result_buf, _alu_result_buf_t) = buf;
+      return;
     }
     rm_write(reg, cdb_message_t) = msg;
     rm_write(alu->task, alu_task_t).busy = false;

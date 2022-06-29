@@ -181,6 +181,7 @@ reg_mut_t *bh_acquire (bus_helper_t *bh) {
   int req_ix = _bh_req_ix(bh);
   if (req_ix >= 0) {
     if (*rr_read(bh->busy[!req_ix], bool)) {
+      debug_log("^ can't be processesed due to buffer full");
       return NULL;
     }
     bool t = true;

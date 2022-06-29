@@ -40,7 +40,7 @@ void _dump_clk (cpu_t *cpu) {
 void _dump_reg (cpu_t *cpu) {
   for (int i = 0; i < REG_COUNT; ++i) {
     rob_id_t rob_id =
-      *rm_read(reg_store_rob_id(cpu->reg_store, i), rob_id_t);
+      reg_store_rob_id_get(cpu->reg_store, i);
     word_t value = reg_store_get(cpu->reg_store, i);
     if (rob_id == 0 && value == 0) continue;
     fprintf(stderr, "Reg %2d: ROB #%02d, Value %08x\n", i,

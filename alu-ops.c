@@ -1,5 +1,7 @@
 #include "alu-ops.h"
+#include "lib/log.h"
 #include "rv32i.h"
+#include <assert.h>
 
 word_t _signed_lt (word_t value1, word_t value2) {
   signed_word_t v1 = value1, v2 = value2;
@@ -29,6 +31,9 @@ word_t alu_execute (alu_op_t op, word_t value1,
     case ALU_BGE: return !_signed_lt(value1, value2);
     case ALU_BLTU: return value1 < value2;
     case ALU_BGEU: return value1 >= value2;
+    default:
+    debug_log("unknown ALU op %d!", op);
+    assert(0);
   }
   return 0;
 }

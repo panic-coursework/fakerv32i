@@ -62,13 +62,6 @@ void _rob_commit (const reorder_buffer_t *rob,
     debug_log("commit: reg[%02d] = %08x", data->dest,
               data->value);
     reg_store_set(unit->reg_store, data->dest, data->value);
-    {
-      reg_mut_t *reg =
-        reg_store_rob_id(unit->reg_store, data->dest);
-      if (*rm_read(reg, rob_id_t) == rob->id) {
-        rm_write(reg, rob_id_t) = 0;
-      }
-    }
     break;
 
     case ROB_STORE:
@@ -94,11 +87,9 @@ void _rob_commit (const reorder_buffer_t *rob,
     assert(false);
   }
   if (success) {
-    if (data->rs >= 0) {
-      reg_mut_t *reg =
-        reg_store_rob_id(unit->reg_store, data->rs);
-      rob_id_t id = *rm_read(reg, rob_id_t);
-      if (id == rob->id) rm_write(reg, rob_id_t) = 0;
+    if (data->dest >= 0) {
+      reg_store_rob_id_clear(unit->reg_store, data->dest,
+                            rob->id);
     }
     rm_write(rob->ready, bool) = false;
     queue_pop(unit->robs);

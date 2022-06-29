@@ -45,9 +45,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
 
   if (inst.format != IF_S && inst.format != IF_B) {
     rob_data->dest = inst.rd;
-    reg_mut_t *reg =
-      reg_store_rob_id(unit->reg_store, inst.rd);
-    rm_write(reg, rob_id_t) = rob->id;
+    reg_store_rob_id_set(unit->reg_store, inst.rd, rob->id);
   } else {
     rob_data->dest = -1;
   }
@@ -59,9 +57,8 @@ addr_t inst_dispatch (inst_unit_t *unit,
       data->addr = inst.immediate;
     } else if (inst.opcode == OPC_JALR) {
       addr_t curr = reg_store_get(unit->reg_store, inst.rs1);
-      reg_mut_t *rob_id_reg =
-        reg_store_rob_id(unit->reg_store, inst.rs1);
-      rob_id_t rob_id = *rm_read(rob_id_reg, rob_id_t);
+      rob_id_t rob_id =
+        reg_store_rob_id_get(unit->reg_store, inst.rs1);
       if (rob_id > 0) {
         const reorder_buffer_t *rob =
           rob_unit_find(unit->rob_unit, rob_id);
@@ -130,7 +127,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
     addr_t jump_target = signed_add(pc, inst.immediate);
     bool predicted = branch_predict(unit->branch_predictor);
     rob_data->predicted_take = predicted;
-    rob_data->fallback = predicted ? jump_target : next_pc;
+    rob_data->fallback = predicted ? next_pc : jump_target;
     if (predicted) next_pc = jump_target;
     break;
 
@@ -156,8 +153,8 @@ void _inst_reg_set (inst_unit_t *unit, reg_id_t id,
     *value = 0;
     return;
   }
-  reg_mut_t *reg = reg_store_rob_id(unit->reg_store, id);
-  rob_id_t rob_id = *rm_read(reg, rob_id_t);
+  rob_id_t rob_id =
+    reg_store_rob_id_get(unit->reg_store, id);
   if (rob_id == 0) {
     *src = 0;
     *value = reg_store_get(unit->reg_store, id);

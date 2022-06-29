@@ -158,16 +158,20 @@ void _rsu_check_alu (rs_unit_t *unit, vector_t *rss) {
     if (!*rm_read(rs->busy, bool)) continue;
     rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
     if (data.src1 != 0 || data.src2 != 0) continue;
-    rm_write(rs->busy, bool) = false;
-    alu_task(unit->alu_pool->alus[alu_id++], (alu_task_t) {
-      .busy = true,
-      .base_msg = (cdb_message_t) {
-        .rob = data.dest,
-      },
-      .op = data.op_alu,
-      .value1 = data.value1,
-      .value2 = data.value2,
-    });
+    status_t status =
+      alu_task(unit->alu_pool->alus[alu_id], (alu_task_t) {
+        .busy = true,
+        .base_msg = (cdb_message_t) {
+          .rob = data.dest,
+        },
+        .op = data.op_alu,
+        .value1 = data.value1,
+        .value2 = data.value2,
+      });
+    ++alu_id;
+    if (status == STATUS_SUCCESS) {
+      rm_write(rs->busy, bool) = false;
+    }
     if (alu_id >= ALU_COUNT) break;
   }
 }
