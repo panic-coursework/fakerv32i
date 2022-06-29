@@ -16,20 +16,18 @@
 #include "reservation-station.h"
 #include "rv32i.h"
 
-#define ROB_CAPACITY 16
-
 bool _rob_is_mispredicted (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) {
     return payload.predicted_take != payload.value;
   } else if (payload.op == ROB_JALR) {
-    return payload.predicted_addr != payload.addr;
+    return payload.predicted_addr != (payload.value & ~1u);
   }
   debug_log("bad payload op %d", payload.op);
   assert(false);
 }
 addr_t _rob_addr (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) return payload.fallback;
-  if (payload.op == ROB_JALR) return payload.addr;
+  if (payload.op == ROB_JALR) return payload.value & ~1u;
   debug_log("bad payload op %d", payload.op);
   assert(false);
 }
@@ -54,6 +52,8 @@ void _rob_commit (const reorder_buffer_t *rob,
     break;
 
     case ROB_REGISTER:
+    debug_log("commit: reg[%02d] = %08x", data->dest,
+              data->value);
     reg_store_set(unit->reg_store, data->dest, data->value);
     break;
 
@@ -96,6 +96,7 @@ void _rob_unit_tick (void *state, va_list args) {
   const reorder_buffer_t *rob =
     rm_read(queue_first(unit->robs), reorder_buffer_t);
   if (!*rm_read(rob->ready, bool)) return;
+  debug_log("ROB %2d commits!", rob->id);
   _rob_commit(rob, unit);
 }
 void _rob_onmsg (void *state, va_list args) {

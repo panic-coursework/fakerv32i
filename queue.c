@@ -91,13 +91,13 @@ void queue_clear (queue_t *queue) {
   rm_write(queue->clear, bool) = true;
 }
 
-bool _queue_foreach (queue_t *queue, int *i,
+bool _queue_foreach (queue_t *queue, int i,
                      reg_mut_t **var) {
   int head = *rm_read(queue->head, int);
-  int tail = *rm_read(queue->head, int);
+  int tail = *rm_read(queue->tail, int);
   if (head == tail) return false;
-  *i = _queue_trunc(*i, queue->capacity);
-  if (*i == tail) return false;
-  *var = queue_id(queue, *i);
+  int id = _queue_trunc(i + head, queue->capacity);
+  if (id == tail) return false;
+  *var = queue_id(queue, id);
   return true;
 }

@@ -9,6 +9,7 @@ struct rob_payload_t {
   rob_op_t op;
   word_t value;
   rs_id_t rs;
+  addr_t pc; // for dump
 
   // for ROB_REGISTER, ROB_BRANCH and ROB_JALR
   reg_id_t dest;
@@ -29,7 +30,7 @@ struct reorder_buffer_t {
   reg_mut_t *payload; // rob_payload_t
 };
 
-#define ROB_UNIT_SIZE 16
+#define ROB_CAPACITY 16
 
 struct rob_unit_t {
   reg_store_t *reg_store;

@@ -23,6 +23,8 @@ addr_t inst_dispatch (inst_unit_t *unit,
                       reorder_buffer_t *rob,
                       inst_t inst,
                       addr_t pc) {
+  debug_log("writing op %d to ROB #%02d, RS #%2d", inst.op,
+            rob->id, rs->id);
   addr_t next_pc = pc + INST_SIZE;
 
   rm_write(rs->busy, bool) = true;
@@ -33,6 +35,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
   rob_data->addr_ready = rob_data->value_ready = false;
   rob_data->rs = rs->id;
   rob_data->size = inst_ls_op(inst);
+  rob_data->pc = pc;
 
   rs_payload_t *data = &rm_write(rs->payload, rs_payload_t);
   rob_id_t rob_id = rob->id;
@@ -57,6 +60,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
     } else if (inst.opcode == OPC_JALR) {
       addr_t curr = reg_store_get(unit->reg_store, inst.rs1);
       addr_t prediction = signed_add(curr, inst.immediate);
+      prediction &= ~1u;
       rob_data->predicted_addr = prediction;
       rob_data->value = next_pc;
       next_pc = prediction;

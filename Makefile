@@ -9,11 +9,13 @@ SRCS = $(shell find . -name '*.cpp' -or  -name '*.c' | grep -v tests/ | grep -v 
 OBJS_C = $(SRCS:.c=.o)
 OBJS = $(OBJS_C:.cpp=.o)
 
+GARBAGE = vgcore*
+
 .PHONY: all clean
 
 all: $(EXE)
 clean:
-	rm -f $(EXE) $(OBJS)
+	rm -f $(EXE) $(OBJS) $(GARBAGE)
 
 $(EXE): $(OBJS)
 	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) $(LDLIBS) -o $(EXE)

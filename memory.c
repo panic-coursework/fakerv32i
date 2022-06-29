@@ -53,7 +53,10 @@ void _mem_tick (void *state, va_list args) {
       if (!reg) continue;
       cdb_message_t msg = req->base_msg;
       msg.result = _mem_get_sz(mem, req->addr, req->size);
+      debug_log("mem writing to ROB #%02d value %08x",
+                msg.rob, msg.result);
       rm_write(reg, cdb_message_t) = msg;
+      req_next->busy = false;
       continue;
     }
   }
@@ -66,7 +69,9 @@ void _mem_tick (void *state, va_list args) {
     struct mem_store_request_t *req_next =
       &rm_write(mem->store_requests[i],
                 struct mem_store_request_t);
-    if (--req_next->ticks_remaining == 0) {
+    req_next->ticks_remaining = req->ticks_remaining - 1;
+    if (req_next->ticks_remaining == 0) {
+      debug_log("store addr %08x complete!", req->addr);
       req_next->busy = false;
       rm_write(req->callback, bool) = true;
     }
@@ -132,7 +137,7 @@ int _mem_acquire_store_req (memory_t *mem) {
 status_t mem_request_load (memory_t *mem, addr_t addr,
   ls_size_t size, cdb_message_t base_msg) {
   int id = _mem_acquire_load_req(mem);
-  if (id <= 0) return STATUS_FAIL;
+  if (id < 0) return STATUS_FAIL;
   struct mem_load_request_t *req =
     &rm_write(mem->load_requests[id],
               struct mem_load_request_t);
@@ -145,7 +150,7 @@ status_t mem_request_load (memory_t *mem, addr_t addr,
 status_t mem_request_store (memory_t *mem, addr_t addr,
   word_t value, ls_size_t size, reg_mut_t *callback) {
   int id = _mem_acquire_store_req(mem);
-  if (id <= 0) return STATUS_FAIL;
+  if (id < 0) return STATUS_FAIL;
   struct mem_store_request_t *req =
     &rm_write(mem->store_requests[id],
               struct mem_store_request_t);

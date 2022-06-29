@@ -7,6 +7,7 @@
 #include "bus.h"
 #include "clk.h"
 #include "lib/closure.h"
+#include "lib/log.h"
 #include "lib/vector.h"
 #include "reg.h"
 #include "rv32i.h"
@@ -22,6 +23,13 @@ void _bus_arb (void *state, va_list args) {
     if (*rm_read(reg, bool)) {
       *gnt = i + 1;
       break;
+    }
+  }
+  if (*gnt == 0) return;
+  debug_log("_bus_arb: winner is %ld", *gnt);
+  vector_foreach (bus->arbitrator.req, i, reg) {
+    if (*rm_read(reg, bool)) {
+      debug_log("_bus_arb: %ld has req", i + 1);
     }
   }
 }
@@ -107,17 +115,23 @@ void _bh_tick (void *state, va_list args) {
   if (_bh_busy(bh, curr)) {
     bool ok = bus_arb_status(bh->bus, bh->id);
     if (ok) {
+      debug_log("bh %2ld got grant!", bh->id);
       void *buf = reg_mut_write(bh->bus->data);
       memcpy(buf, reg_mut_read(bh->buffer[curr]),
              bh->bus->size);
       bool f = false;
       reg_reduce_write(bh->busy[curr], &f);
     } else {
+      debug_log("bh %2ld failed, requesting for next cycle",
+                bh->id);
       bus_arb_req(bh->bus, bh->id);
       requested = true;
+      bool t = true;
+      reg_reduce_write(bh->busy[curr], &t);
     }
   }
   if (!requested && _bh_busy(bh, !curr)) {
+    debug_log("bh swap curr with buffer");
     bus_arb_req(bh->bus, bh->id);
     rm_write(bh->current, int) = !curr;
   }
@@ -160,6 +174,7 @@ bool bh_should_stall (bus_helper_t *bh) {
   return ix >= 0 && *rr_read(bh->busy[!ix], bool);
 }
 reg_mut_t *bh_acquire (bus_helper_t *bh) {
+  debug_log("bh %2ld got request", bh->id);
   int req_ix = _bh_req_ix(bh);
   if (req_ix >= 0) {
     if (*rr_read(bh->busy[!req_ix], bool)) {

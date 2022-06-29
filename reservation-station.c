@@ -25,11 +25,15 @@ void _rs_onmsg (void *state, va_list args) {
   rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
   bool modified = false;
   if (data.src1 == msg->rob) {
+    debug_log("RS #%02d src1 match ROB #%02d", rs->id,
+              msg->rob);
     modified = true;
     data.value1 = msg->result;
     data.src1 = 0;
   }
   if (data.src2 == msg->rob) {
+    debug_log("RS #%02d src2 match ROB #%02d", rs->id,
+              msg->rob);
     modified = true;
     data.value2 = msg->result;
     data.src2 = 0;
@@ -189,13 +193,18 @@ void _rsu_check_load (rs_unit_t *unit, vector_t *rss) {
     queue_foreach (unit->rob_unit->robs, i, reg) {
       const reorder_buffer_t *rob =
         rm_read(reg, reorder_buffer_t);
+      if (rob->id > data.dest) break;
       const rob_payload_t *rob_data =
         rm_read(rob->payload, rob_payload_t);
       if (rob_data->op == ROB_STORE) {
         blocking = !rob_data->addr_ready ||
           _rsu_overlap(addr, data.op_ls,
                        rob_data->addr, rob_data->size);
-        if (blocking) break;
+        if (blocking) {
+          debug_log("RSLB stall due to store blocking load at ROB #%02d",
+                    rob->id);
+          break;
+        }
       }
     }
     if (blocking) continue;
@@ -209,6 +218,7 @@ void _rsu_check_load (rs_unit_t *unit, vector_t *rss) {
       .op = LS_LOAD,
       .size = data.op_ls,
     });
+    rm_write(rs->busy, bool) = false;
     // only write one command at a time.
     break;
   }
@@ -227,15 +237,22 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
         *rm_read(rob->payload, rob_payload_t);
       if (old.addr_ready && old.value_ready) continue;
       if (!old.addr_ready && data.src1 == 0) {
-        old.addr = _rs_calc_addr(data);
+        addr_t addr = _rs_calc_addr(data);
+        debug_log("SB writing addr to ROB #%02d value %08x",
+                  rob->id, addr);
+        old.addr = addr;
         old.addr_ready = true;
       }
       if (!old.value_ready && data.src2 == 0) {
+        debug_log("SB writing value to ROB #%02d value %08x",
+                  rob->id, data.value2);
         old.value = data.value2;
         old.value_ready = true;
       }
       rm_write(rob->payload, rob_payload_t) = old;
-      if (data.src1 == 0 && data.src2 == 0) {
+      if (old.addr_ready && old.value_ready) {
+        debug_log("SB pushing ready state to ROB #%02d!",
+                  rob->id);
         rm_write(rs->busy, bool) = false;
         rm_write(rob->ready, bool) = true;
       }

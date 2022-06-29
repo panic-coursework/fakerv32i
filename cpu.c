@@ -1,11 +1,12 @@
 #include <stdlib.h>
 
+#include "cpu.h"
 #include "alu.h"
 #include "branch-predictor.h"
 #include "bus.h"
 #include "common-data-bus.h"
 #include "clk.h"
-#include "cpu.h"
+#include "dump.h"
 #include "inst-unit.h"
 #include "lib/closure.h"
 #include "lib/log.h"
@@ -21,8 +22,13 @@ bool hcf = false;
 void _cpu_debug_cdb (void *state, va_list args) {
   cpu_t *cpu = (cpu_t *) state;
   cdb_message_t *msg = va_arg(args, cdb_message_t *);
-  debug_log("cdb tick %ld: rob #%d received value %08x",
+  debug_log("cdb tick %ld: ROB #%02d received value %08x",
             clk_get(cpu->clk), msg->rob, msg->result);
+}
+
+void _cpu_debug (void *state, va_list args) {
+  cpu_t *cpu = (cpu_t *) state;
+  cpu_dump(cpu);
 }
 
 cpu_t *cpu_create () {
@@ -59,8 +65,9 @@ cpu_t *cpu_create () {
       rs_create(i, RS_STORE_BUFFER, cdb, clk));
   }
 
-  // debug cdb
+  // debug
   bus_listen(cdb, closure_create(_cpu_debug_cdb, cpu));
+  clk_add_callback(clk, closure_create(_cpu_debug, cpu));
 
   return cpu;
 }

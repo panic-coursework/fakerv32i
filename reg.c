@@ -1,5 +1,6 @@
 #include "reg.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -75,6 +76,7 @@ const void *reg_mut_read (reg_mut_t *reg) {
 void *reg_mut_write (reg_mut_t *reg) {
   if (++(reg->write_count) > 1 && !reg->allow_multiwrite) {
     debug_log("reg_mut_write called more than once!");
+    assert(0);
   }
   return reg->next;
 }
@@ -132,8 +134,8 @@ reg_reduce_t *reg_or_create (clk_t *clk) {
 
 void _busy_wait_tick (void *state, va_list args) {
   busy_wait_t *reg = (busy_wait_t *) state;
-  if (!rr_read(reg->stall, bool)) return;
-  if (!rm_read(reg->signal, bool)) busy_wait(reg);
+  if (!*rr_read(reg->stall, bool)) return;
+  if (!*rm_read(reg->signal, bool)) busy_wait(reg);
 }
 busy_wait_t *busy_wait_create (clk_t *clk) {
   busy_wait_t *reg =
@@ -154,7 +156,7 @@ void busy_wait (busy_wait_t *reg) {
   reg_reduce_write(reg->stall, &t);
 }
 bool busy_wait_should_stall (busy_wait_t *reg) {
-  return rr_read(reg->stall, bool);
+  return *rr_read(reg->stall, bool);
 }
 reg_mut_t *busy_wait_callback (busy_wait_t *reg) {
   return reg->signal;
