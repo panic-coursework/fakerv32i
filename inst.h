@@ -57,6 +57,9 @@ enum inst_op_t {
 
   // Halt and Catch Fire
   INST_HCF  = 0xfee1dead,
+
+  // Invalid instruction
+  INST_UNIMP = 0xbada991e,
 };
 typedef enum inst_op_t inst_op_t;
 

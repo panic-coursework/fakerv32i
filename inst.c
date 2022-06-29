@@ -107,10 +107,11 @@ inst_t inst_decode (word_t inst) {
     break;
 
     default:
+    // TODO: implement INST_UNIMP
     debug_log("unknown opcode %08x", inst);
     assert(0);
   }
-  if (inst == INST_HCF) res.op = INST_HCF;
+  if (inst == INST_MAGIC_HCF) res.op = INST_HCF;
   return res;
 }
 
@@ -125,7 +126,9 @@ rs_type_t inst_type (inst_t inst) {
 }
 
 rob_op_t inst_rob_op (inst_t inst) {
-  if (inst.op == INST_HCF) return ROB_HCF;
+  if (inst.op == INST_HCF) {
+    return ROB_HCF;
+  }
   opcodes_t opcode = (opcodes_t) inst.op & OPCODE_MASK;
   switch (opcode) {
     case OPC_STORE: return ROB_STORE;

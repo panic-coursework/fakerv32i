@@ -7,6 +7,7 @@
 struct reg_store_t {
   reg_mut_t *registers[REG_COUNT];
   reg_mut_t *rob_id[REG_COUNT]; // rob_id_t
+  reg_mut_t *clear; // bool
 };
 
 reg_store_t *reg_store_create (clk_t *clk);
