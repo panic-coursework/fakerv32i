@@ -70,6 +70,7 @@ enum inst_format_t {
   IF_J,
   IF_B,
   IF_S,
+  IF_UNIMP,
 };
 typedef enum inst_format_t inst_format_t;
 

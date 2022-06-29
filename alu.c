@@ -38,6 +38,7 @@ void _alu_tick (void *state, va_list args) {
     debug_log("ALU task complete, writing ROB #%02d = %08x",
               msg.rob, msg.result);
     if (!reg) {
+      debug_log("^ can't write cdb!");
       _alu_result_buf_t buf;
       buf.msg = msg;
       buf.busy = true;

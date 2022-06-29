@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+#include "clk.h"
+#include "lib/closure.h"
 #include "queue.h"
 #include "reg.h"
 #include "rv32i.h"
@@ -24,6 +26,7 @@ queue_t *queue_create (size_t capacity, size_t size,
   queue->tail = reg_mut_create(sizeof(int), clk);
   queue->clear = reg_mut_create(sizeof(bool), clk);
   queue->capacity = capacity;
+  clk_add_callback(clk, closure_create(_queue_tick, queue));
   return queue;
 }
 void queue_free (queue_t *queue) {

@@ -29,7 +29,19 @@ word_t _mem_get_sz (memory_t *mem, addr_t addr,
     case LS_HWORDU: return *(__uint16_t *) base;
     case LS_WORD: return *(__uint32_t *) base;
     default:
-    debug_log("invalid size");
+    debug_log("invalid size %d", size);
+    assert(0);
+  }
+}
+void _mem_set_sz (memory_t *mem, addr_t addr,
+                  word_t value, ls_size_t size) {
+  void *base = &mem->data[addr];
+  switch (size) {
+    case LS_BYTE: *(__uint8_t *) base = value; break;
+    case LS_HWORD: *(__uint16_t *) base = value; break;
+    case LS_WORD: *(__uint32_t *) base = value; break;
+    default:
+    debug_log("invalid size %d", size);
     assert(0);
   }
 }
@@ -53,8 +65,8 @@ void _mem_tick (void *state, va_list args) {
       if (!reg) continue;
       cdb_message_t msg = req->base_msg;
       msg.result = _mem_get_sz(mem, req->addr, req->size);
-      debug_log("mem writing to ROB #%02d value %08x",
-                msg.rob, msg.result);
+      debug_log("mem writing to ROB #%02d addr %08x value %08x",
+                msg.rob, req->addr, msg.result);
       rm_write(reg, cdb_message_t) = msg;
       req_next->busy = false;
       continue;
@@ -71,6 +83,7 @@ void _mem_tick (void *state, va_list args) {
                 struct mem_store_request_t);
     req_next->ticks_remaining = req->ticks_remaining - 1;
     if (req_next->ticks_remaining == 0) {
+      _mem_set_sz(mem, req->addr, req->value, req->size);
       debug_log("store addr %08x complete!", req->addr);
       req_next->busy = false;
       rm_write(req->callback, bool) = true;
@@ -106,6 +119,10 @@ void mem_set (memory_t *mem, addr_t addr, byte_t value) {
   mem->data[addr] = value;
 }
 byte_t mem_get (memory_t *mem, addr_t addr) {
+  if (addr >= MEM_SIZE) {
+    debug_log("bad mem access addr %08x", addr);
+    return 0;
+  }
   return mem->data[addr];
 }
 word_t mem_get_inst (memory_t *mem, addr_t addr) {

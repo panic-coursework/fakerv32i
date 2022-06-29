@@ -20,14 +20,14 @@ bool _rob_is_mispredicted (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) {
     return payload.predicted_take != payload.value;
   } else if (payload.op == ROB_JALR) {
-    return payload.predicted_addr != (payload.value & ~1u);
+    return payload.predicted_addr != (payload.addr & ~1u);
   }
   debug_log("bad payload op %d", payload.op);
   assert(false);
 }
 addr_t _rob_addr (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) return payload.fallback;
-  if (payload.op == ROB_JALR) return payload.value & ~1u;
+  if (payload.op == ROB_JALR) return payload.addr & ~1u;
   debug_log("bad payload op %d", payload.op);
   assert(false);
 }
@@ -35,6 +35,8 @@ void _rob_commit (const reorder_buffer_t *rob,
                   rob_unit_t *unit) {
   const rob_payload_t *data =
     rm_read(rob->payload, rob_payload_t);
+  debug_log("ROB %2d commits for addr %08x!", rob->id,
+            data->pc);
   bool success = true;
   switch (data->op) {
     case ROB_BRANCH:
@@ -44,10 +46,15 @@ void _rob_commit (const reorder_buffer_t *rob,
                     data->value);
     }
     if (_rob_is_mispredicted(*data)) {
-      inst_unit_force_pc(unit->inst_unit, _rob_addr(*data));
+      addr_t addr = _rob_addr(*data);
+      debug_log("branch prediction failed, writing pc addr %08x",
+                addr);
+      inst_unit_force_pc(unit->inst_unit, addr);
       reg_file_clear(unit->reg_store);
       rob_unit_clear(unit);
       rs_unit_clear(unit->rs_unit);
+    } else {
+      debug_log("branch prediction success!");
     }
     break;
 
@@ -55,6 +62,13 @@ void _rob_commit (const reorder_buffer_t *rob,
     debug_log("commit: reg[%02d] = %08x", data->dest,
               data->value);
     reg_store_set(unit->reg_store, data->dest, data->value);
+    {
+      reg_mut_t *reg =
+        reg_store_rob_id(unit->reg_store, data->dest);
+      if (*rm_read(reg, rob_id_t) == rob->id) {
+        rm_write(reg, rob_id_t) = 0;
+      }
+    }
     break;
 
     case ROB_STORE:
@@ -92,20 +106,31 @@ void _rob_commit (const reorder_buffer_t *rob,
 }
 void _rob_unit_tick (void *state, va_list args) {
   rob_unit_t *unit = (rob_unit_t *) state;
+  if (*rm_read(unit->robs->clear, bool)) return;
   if (queue_empty(unit->robs)) return;
   const reorder_buffer_t *rob =
     rm_read(queue_first(unit->robs), reorder_buffer_t);
   if (!*rm_read(rob->ready, bool)) return;
-  debug_log("ROB %2d commits!", rob->id);
   _rob_commit(rob, unit);
 }
-void _rob_onmsg (void *state, va_list args) {
+void _rob_unit_onmsg (void *state, va_list args) {
   cdb_message_t *msg = va_arg(args, cdb_message_t *);
-  reorder_buffer_t *buf = (reorder_buffer_t *) state;
-  if (msg->rob == buf->id) {
-    rm_write(buf->payload, rob_payload_t).value =
-      msg->result;
-    rm_write(buf->ready, bool) = true;
+  rob_unit_t *unit = (rob_unit_t *) state;
+  if (*rm_read(unit->robs->clear, bool)) return;
+  reg_mut_t *reg;
+  queue_foreach (unit->robs, i, reg) {
+    const reorder_buffer_t *buf =
+      rm_read(reg, reorder_buffer_t);
+    if (msg->rob == buf->id) {
+      rob_payload_t *data =
+        &rm_write(buf->payload, rob_payload_t);
+      if (data->op == ROB_JALR) {
+        data->addr = msg->result;
+      } else {
+        data->value = msg->result;
+      }
+      rm_write(buf->ready, bool) = true;
+    }
   }
 }
 rob_unit_t *rob_unit_create (reg_store_t *regs,
@@ -129,9 +154,9 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
     buf->ready = reg_mut_create(sizeof(bool), clk);
     buf->payload =
       reg_mut_create(sizeof(rob_payload_t), clk);
-    bus_listen(cdb, closure_create(_rob_onmsg, buf));
   }
 
+  bus_listen(cdb, closure_create(_rob_unit_onmsg, unit));
   clk_add_callback(clk, closure_create(_rob_unit_tick, unit));
 
   return unit;

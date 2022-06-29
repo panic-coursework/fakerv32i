@@ -22,6 +22,7 @@ struct reservation_station_t {
   rs_type_t type;
   reg_mut_t *busy;
   reg_mut_t *payload;
+  rs_unit_t *unit;
 };
 
 struct rs_unit_t {

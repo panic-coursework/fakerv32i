@@ -59,8 +59,21 @@ addr_t inst_dispatch (inst_unit_t *unit,
       data->addr = inst.immediate;
     } else if (inst.opcode == OPC_JALR) {
       addr_t curr = reg_store_get(unit->reg_store, inst.rs1);
+      reg_mut_t *rob_id_reg =
+        reg_store_rob_id(unit->reg_store, inst.rs1);
+      rob_id_t rob_id = *rm_read(rob_id_reg, rob_id_t);
+      if (rob_id > 0) {
+        const reorder_buffer_t *rob =
+          rob_unit_find(unit->rob_unit, rob_id);
+        if (rob && *rm_read(rob->ready, bool)) {
+          rob_payload_t data =
+            *rm_read(rob->payload, rob_payload_t);
+          curr = data.value;
+        }
+      }
       addr_t prediction = signed_add(curr, inst.immediate);
       prediction &= ~1u;
+      debug_log("jalr predicted addr %08x", prediction);
       rob_data->predicted_addr = prediction;
       rob_data->value = next_pc;
       next_pc = prediction;
@@ -144,19 +157,28 @@ void _inst_reg_set (inst_unit_t *unit, reg_id_t id,
     return;
   }
   reg_mut_t *reg = reg_store_rob_id(unit->reg_store, id);
-  rob_id_t rob = *rm_read(reg, rob_id_t);
-  if (rob == 0) {
+  rob_id_t rob_id = *rm_read(reg, rob_id_t);
+  if (rob_id == 0) {
     *src = 0;
     *value = reg_store_get(unit->reg_store, id);
   } else {
-    cdb_message_t *cdb =
-      (cdb_message_t *) bus_get_data(unit->cdb);
-    if (cdb && cdb->rob == rob) {
+    const reorder_buffer_t *rob =
+      rob_unit_find(unit->rob_unit, rob_id);
+    if (*rm_read(rob->ready, bool)) {
+      rob_payload_t data =
+        *rm_read(rob->payload, rob_payload_t);
       *src = 0;
-      *value = cdb->result;
+      *value = data.value;
     } else {
-      *src = rob;
-      *value = 0;
+      cdb_message_t *cdb =
+        (cdb_message_t *) bus_get_data(unit->cdb);
+      if (cdb && cdb->rob == rob_id) {
+        *src = 0;
+        *value = cdb->result;
+      } else {
+        *src = rob_id;
+        *value = 0;
+      }
     }
   }
 }

@@ -21,6 +21,7 @@
 void _rs_onmsg (void *state, va_list args) {
   cdb_message_t *msg = va_arg(args, cdb_message_t *);
   reservation_station_t *rs = (reservation_station_t *) state;
+  if (*rm_read(rs->unit->clear, bool)) return;
   if (!*rm_read(rs->busy, bool)) return;
   rs_payload_t data = *rm_read(rs->payload, rs_payload_t);
   bool modified = false;
@@ -128,6 +129,7 @@ vector_t *_rs_get_vec (rs_unit_t *unit, rs_type_t type) {
 }
 void rs_unit_add (rs_unit_t *unit,
                   reservation_station_t *rs) {
+  rs->unit = unit;
   vector_push(_rs_get_vec(unit, rs->type), rs);
 }
 
@@ -193,7 +195,7 @@ void _rsu_check_load (rs_unit_t *unit, vector_t *rss) {
     queue_foreach (unit->rob_unit->robs, i, reg) {
       const reorder_buffer_t *rob =
         rm_read(reg, reorder_buffer_t);
-      if (rob->id > data.dest) break;
+      if (rob->id == data.dest) break;
       const rob_payload_t *rob_data =
         rm_read(rob->payload, rob_payload_t);
       if (rob_data->op == ROB_STORE) {
@@ -210,6 +212,7 @@ void _rsu_check_load (rs_unit_t *unit, vector_t *rss) {
     if (blocking) continue;
     // not blocking, and ready to issue.
     // discard results as we are sure the queue isn't full.
+    // TODO!: what will happen if rob and rs push into the queue at the same time?
     ls_queue_push(unit->ls_queue, (ls_queue_payload_t) {
       .addr = addr,
       .base_msg = (cdb_message_t) {

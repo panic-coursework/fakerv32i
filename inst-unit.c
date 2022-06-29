@@ -37,6 +37,7 @@ void _inst_unit_tick (void *state, va_list args) {
   inst_t inst = inst_decode(inst_bin);
   debug_log("PC: %08x, inst: %08x, op: %08x", pc, inst_bin,
             inst.op);
+  if (inst.op == INST_UNIMP) return;
   rs_type_t type = inst_type(inst);
   reservation_station_t *rs =
     rs_unit_acquire(unit->rs_unit, type);

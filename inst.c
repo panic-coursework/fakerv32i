@@ -108,8 +108,9 @@ inst_t inst_decode (word_t inst) {
 
     default:
     // TODO: implement INST_UNIMP
-    debug_log("unknown opcode %08x", inst);
-    assert(0);
+    res.format = IF_UNIMP;
+    res.op = INST_UNIMP;
+    debug_log("unknown instruction %08x", inst);
   }
   if (inst == INST_MAGIC_HCF) res.op = INST_HCF;
   return res;
@@ -174,8 +175,8 @@ word_t _inst_jal_imm (word_t inst) {
 #define BRANCH_0_SHIFT 19
 #define BRANCH_1_SHIFT 7 // We don't want negative shifts
 #define BRANCH_1_LSHIFT 11
-#define BRANCH_2_SHIFT 7
-#define BRANCH_3_SHIFT 20
+#define BRANCH_2_SHIFT 20
+#define BRANCH_3_SHIFT 7
 #define BRANCH_SIZE    13
 
 word_t _inst_branch_imm (word_t inst) {

@@ -131,10 +131,13 @@ void _bh_tick (void *state, va_list args) {
     }
   }
   if (!requested && _bh_busy(bh, !curr)) {
-    debug_log("bh swap curr with buffer");
+    debug_log("bh %2ld swap curr with buffer", bh->id);
     bus_arb_req(bh->bus, bh->id);
     rm_write(bh->current, int) = !curr;
   }
+  // copy buffer busy state
+  bool buf_busy = *rr_read(bh->busy[!curr], bool);
+  reg_reduce_write(bh->busy[!curr], &buf_busy);
 }
 int _bh_req_ix (bus_helper_t *bh) {
   int curr = *rm_read(bh->current, int);

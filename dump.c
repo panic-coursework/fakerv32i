@@ -49,23 +49,31 @@ void _dump_reg (cpu_t *cpu) {
   fprintf(stderr, SEP);
 }
 
-void _dump_rs (cpu_t *cpu) {
+void _dump_rs_vec (vector_t *vec, const char *type) {
   reservation_station_t *rs;
-  vector_foreach (cpu->rs->alu_stations, i, rs) {
+  vector_foreach (vec, i, rs) {
     if (*rm_read(rs->busy, bool)) {
-      fprintf(stderr, "RS %d busy\n", rs->id);
+      fprintf(stderr, "%s %d: ", type, rs->id);
+      rs_payload_t data =
+        *rm_read(rs->payload, rs_payload_t);
+      fprintf(stderr, "dest ROB #%02d ", data.dest);
+      if (data.src1 == 0) {
+        fprintf(stderr, "value1 %08x ", data.value1);
+      } else {
+        fprintf(stderr, "src1 #%02d ", data.src1);
+      }
+      if (data.src2 == 0) {
+        fprintf(stderr, "value2 %08x\n", data.value2);
+      } else {
+        fprintf(stderr, "src2 #%02d\n", data.src2);
+      }
     }
   }
-  vector_foreach (cpu->rs->load_buffers, i, rs) {
-    if (*rm_read(rs->busy, bool)) {
-      fprintf(stderr, "RSLB %d busy\n", rs->id);
-    }
-  }
-  vector_foreach (cpu->rs->store_buffers, i, rs) {
-    if (*rm_read(rs->busy, bool)) {
-      fprintf(stderr, "RSSB %d busy\n", rs->id);
-    }
-  }
+}
+void _dump_rs (cpu_t *cpu) {
+  _dump_rs_vec(cpu->rs->alu_stations, "RS");
+  _dump_rs_vec(cpu->rs->load_buffers, "RSLB");
+  _dump_rs_vec(cpu->rs->store_buffers, "RSSB");
   fprintf(stderr, SEP);
 }
 
@@ -94,7 +102,7 @@ void _dump_ls_queue (cpu_t *cpu) {
             data->op == LS_LOAD ? "load" : "store",
             data->addr, data->size);
     if (data->op == LS_LOAD) {
-      fprintf(stderr, " ROB #%02x\n", data->base_msg.rob);
+      fprintf(stderr, " ROB #%02d\n", data->base_msg.rob);
     } else {
       fprintf(stderr, " value %08x\n", data->value);
     }
