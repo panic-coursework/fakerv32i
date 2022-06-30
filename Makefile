@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -g
+CFLAGS = -g -O3
 CXX = g++
-CXXFLAGS = -g
+CXXFLAGS = -g -O3
 
 EXE = rv32i
 

@@ -18,6 +18,11 @@ typedef struct _alu_result_buf_t {
 // TODO: test
 void _alu_tick (void *state, va_list args) {
   alu_t *alu = (alu_t *) state;
+  if (bh_should_clear(alu->cdb_helper)) {
+    rm_write(alu->result_buf, _alu_result_buf_t).busy = false;
+    rm_write(alu->task, alu_task_t).busy = false;
+    return;
+  }
   _alu_result_buf_t buf =
     *rm_read(alu->result_buf, _alu_result_buf_t);
   if (buf.busy) {
@@ -70,6 +75,9 @@ void alu_free (alu_t *alu) {
 }
 
 status_t alu_task (alu_t *alu, alu_task_t task) {
+  if (bh_should_clear(alu->cdb_helper)) {
+    return STATUS_SUCCESS;
+  }
   if (bh_should_stall(alu->cdb_helper)) {
     debug_log("ALU rejecting task due to cdb full!");
     return STATUS_FAIL;

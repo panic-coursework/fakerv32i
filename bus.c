@@ -18,6 +18,7 @@ void _bus_arb (void *state, va_list args) {
   *gnt = 0;
 
   bus_t *bus = (bus_t *) state;
+  if (*rm_read(bus->clear, int)) return;
   reg_mut_t *reg;
   vector_foreach (bus->arbitrator.req, i, reg) {
     if (*rm_read(reg, bool)) {
@@ -38,6 +39,11 @@ void _bus_tick (void *state, va_list args) {
   bus_t *bus = (bus_t *) state;
   rm_write(bus->arbitrator.fire, bool) =
     *r_read(bus->arbitrator.gnt, size_t) != 0;
+  int clear_cycles = *rm_read(bus->clear, int);
+  if (clear_cycles) {
+    rm_write(bus->clear, int) = clear_cycles - 1;
+    return;
+  }
   if (*rm_read(bus->arbitrator.fire, bool)) {
     closure_t *callback;
     const void *data = rm_read(bus->data, void);
@@ -56,6 +62,7 @@ bus_t *bus_create (size_t size, clk_t *clk) {
   bus->size = size;
   bus->clk = clk;
   bus->listeners = vector_create();
+  bus->clear = reg_mut_create(sizeof(int), clk);
 
   clk_add_callback(clk, closure_create(_bus_tick, bus));
 
@@ -76,6 +83,7 @@ void bus_free (bus_t *bus) {
     closure_free(cb);
   }
   vector_free(bus->listeners);
+  reg_mut_free(bus->clear);
   free(bus);
 }
 
@@ -87,12 +95,18 @@ size_t bus_arb_add (bus_t *bus) {
 }
 
 void bus_arb_req (bus_t *bus, size_t id) {
+  if (*rm_read(bus->clear, int)) return;
   reg_mut_t *req = &v_read(bus->arbitrator.req, id - 1,
                            reg_mut_t);
   rm_write(req, bool) = true;
 }
 bool bus_arb_status (bus_t *bus, size_t id) {
+  if (*rm_read(bus->clear, int)) return true;
   return *r_read(bus->arbitrator.gnt, size_t) == id;
+}
+
+void bus_clear (bus_t *bus) {
+  rm_write(bus->clear, int) = 2;
 }
 
 const void *bus_get_data (bus_t *bus) {
@@ -109,6 +123,7 @@ bool _bh_busy (bus_helper_t *bh, int id) {
 }
 void _bh_tick (void *state, va_list args) {
   bus_helper_t *bh = (bus_helper_t *) state;
+  if (*rm_read(bh->bus->clear, bool)) return;
   bool requested = false;
   int curr = *rm_read(bh->current, int);
 
@@ -172,6 +187,9 @@ void bh_free (bus_helper_t *bh) {
   free(bh);
 }
 
+bool bh_should_clear (bus_helper_t *bh) {
+  return *rm_read(bh->bus->clear, int) > 0;
+}
 bool bh_should_stall (bus_helper_t *bh) {
   int ix = _bh_req_ix(bh);
   return ix >= 0 && *rr_read(bh->busy[!ix], bool);

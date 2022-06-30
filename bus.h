@@ -18,6 +18,8 @@ struct bus_t {
   size_t size;
   clk_t *clk;
   vector_t *listeners;
+  // TODO: clear load requests that are still processing
+  reg_mut_t *clear; // int
 };
 
 bus_t *bus_create (size_t size, clk_t *clk);
@@ -30,6 +32,8 @@ bool bus_arb_status (bus_t *bus, size_t id);
 
 const void *bus_get_data (bus_t *bus);
 void bus_listen (bus_t *bus, closure_t *callback);
+
+void bus_clear(bus_t *bus);
 
 #define BUS_TICKS 2
 
@@ -44,5 +48,6 @@ struct bus_helper_t {
 bus_helper_t *bh_create (bus_t *bus);
 void bh_free (bus_helper_t *bh);
 
+bool bh_should_clear (bus_helper_t *bh);
 bool bh_should_stall (bus_helper_t *bh);
 reg_mut_t *bh_acquire (bus_helper_t *bh);

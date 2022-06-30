@@ -27,7 +27,14 @@ void _reg_file_next (void *state, va_list args) {
     rob_id_t id = *rm_read(regs->rob_id_set[i], rob_id_t);
     rob_id_t id_clear =
       *rm_read(regs->rob_id_clear_if[i], rob_id_t);
-    if (id_clear == id) id = 0;
+    if ((id_clear == id && id != 0) || id_clear < 0) {
+      id = 0;
+      rm_write(regs->rob_id_clear_if[i], rob_id_t) = 0;
+      rm_write(regs->rob_id_set[i], rob_id_t) = 0;
+      // FIXME: hack
+      regs->rob_id_clear_if[i]->write_count = 0;
+      regs->rob_id_set[i]->write_count = 0;
+    }
     ids->rob_ids[i] = id;
   }
 }

@@ -45,6 +45,7 @@ addr_t inst_dispatch (inst_unit_t *unit,
 
   if (inst.format != IF_S && inst.format != IF_B) {
     rob_data->dest = inst.rd;
+    debug_log("set reg %d to ROB #%02d", inst.rd, rob->id);
     reg_store_rob_id_set(unit->reg_store, inst.rd, rob->id);
   } else {
     rob_data->dest = -1;

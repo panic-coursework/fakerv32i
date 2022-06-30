@@ -14,6 +14,15 @@
 
 void _ls_queue_tick (void *state, va_list args) {
   ls_queue_t *queue = (ls_queue_t *) state;
+  if (*rm_read(queue->clear, bool)) {
+    reg_mut_t *reg;
+    queue_foreach (queue->queue, i, reg) {
+      if (rm_read(reg, ls_queue_payload_t)->op == LS_LOAD) {
+        rm_write(reg, ls_queue_payload_t).cleared = true;
+      }
+    }
+    return;
+  }
   if (busy_wait_should_stall(queue->lock)) {
     debug_log("ls queue busy waiting");
     return;
@@ -24,6 +33,7 @@ void _ls_queue_tick (void *state, va_list args) {
   }
   const ls_queue_payload_t *data = 
     rm_read(queue_pop(queue->queue), ls_queue_payload_t);
+  if (data->cleared) return;
   switch (data->op) {
     case LS_LOAD:
     debug_log("ls queue load addr %08x for ROB #%02d",
@@ -53,6 +63,8 @@ ls_queue_t *ls_queue_create (memory_t *mem, clk_t *clk) {
                               sizeof(ls_queue_payload_t),
                               clk);
   queue->lock = busy_wait_create(clk);
+  queue->clear = reg_mut_create(sizeof(bool), clk);
+  queue->clear->clear = true;
   queue->mem = mem;
 
   clk_add_callback(clk, closure_create(_ls_queue_tick, queue));
@@ -62,6 +74,7 @@ ls_queue_t *ls_queue_create (memory_t *mem, clk_t *clk) {
 void ls_queue_free (ls_queue_t *queue) {
   queue_free(queue->queue);
   busy_wait_free(queue->lock);
+  reg_mut_free(queue->clear);
   free(queue);
 }
 
@@ -72,9 +85,14 @@ status_t ls_queue_push (ls_queue_t *queue,
                         ls_queue_payload_t payload) {
   if (ls_queue_full(queue)) return STATUS_FAIL;
   reg_mut_t *reg = queue_push(queue->queue);
+  payload.cleared = false;
   rm_write(reg, ls_queue_payload_t) = payload;
   debug_log("recv req %s addr %08x size %d",
             payload.op == LS_LOAD ? "load" : "store",
             payload.addr, payload.size);
   return STATUS_SUCCESS;
+}
+
+void ls_queue_clear (ls_queue_t *queue) {
+  rm_write(queue->clear, bool) = true;
 }

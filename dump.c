@@ -4,6 +4,7 @@
 #include "clk.h"
 #include "lib/vector.h"
 #include "ls-queue.h"
+#include "memory.h"
 #include "queue.h"
 #include "reg.h"
 #include "reg-store.h"
@@ -16,10 +17,11 @@
 
 #define CLOCK \
 SEP                                                        \
-"|                     Cycle %6ld                   |\n"    \
+"|                     Cycle %6ld                   |\n"   \
 SEP
 
 void _dump_clk (cpu_t *cpu);
+void _dump_stk (cpu_t *cpu);
 void _dump_reg (cpu_t *cpu);
 void _dump_rs (cpu_t *cpu);
 void _dump_rob (cpu_t *cpu);
@@ -27,6 +29,7 @@ void _dump_ls_queue (cpu_t *cpu);
 
 void cpu_dump (cpu_t *cpu) {
   _dump_clk(cpu);
+  _dump_stk(cpu);
   _dump_reg(cpu);
   _dump_rs(cpu);
   _dump_rob(cpu);
@@ -37,14 +40,34 @@ void _dump_clk (cpu_t *cpu) {
   fprintf(stderr, CLOCK, clk_get(cpu->clk));
 }
 
+void _dump_stk (cpu_t *cpu) {
+  addr_t sp = reg_store_get(cpu->reg_store, 2);
+  if (sp < 0x1f000) {
+    fprintf(stderr, "skipping stack dump\n");
+    return;
+  }
+  for (addr_t i = sp; i < 0x20000;) {
+    fprintf(stderr, "%08x: ", i);
+    for (int j = 0; j < 16; ++j) {
+      fprintf(stderr, "%02x ", mem_get(cpu->mem, i));
+      ++i;
+      if (i >= 0x20000) break;
+    }
+    fprintf(stderr, "\n");
+  }
+  fprintf(stderr, SEP);
+}
+
 void _dump_reg (cpu_t *cpu) {
   for (int i = 0; i < REG_COUNT; ++i) {
     rob_id_t rob_id =
       reg_store_rob_id_get(cpu->reg_store, i);
+    rob_id_t rc_id =
+      *rm_read(cpu->reg_store->rob_id_clear_if[i], int);
     word_t value = reg_store_get(cpu->reg_store, i);
-    if (rob_id == 0 && value == 0) continue;
-    fprintf(stderr, "Reg %2d: ROB #%02d, Value %08x\n", i,
-            rob_id, value);
+    if (rob_id == 0 && value == 0 && rc_id == 0) continue;
+    fprintf(stderr, "Reg %2d: ROB #%02d, Value %08x, clearif #%02d\n", i,
+            rob_id, value, rc_id);
   }
   fprintf(stderr, SEP);
 }

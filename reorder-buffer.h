@@ -38,6 +38,7 @@ struct rob_unit_t {
   inst_unit_t *inst_unit; // for force_pc()
   rs_unit_t *rs_unit; // for clear()
   queue_t *robs; // reorder_buffer_t
+  bus_t *cdb; // for clear()
 };
 
 rob_unit_t *rob_unit_create (reg_store_t *regs,

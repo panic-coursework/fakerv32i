@@ -53,6 +53,8 @@ void _rob_commit (const reorder_buffer_t *rob,
       reg_file_clear(unit->reg_store);
       rob_unit_clear(unit);
       rs_unit_clear(unit->rs_unit);
+      ls_queue_clear(unit->ls_queue);
+      bus_clear(unit->cdb);
     } else {
       debug_log("branch prediction success!");
     }
@@ -136,6 +138,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
   unit->ls_queue = queue;
   unit->inst_unit = inst_unit;
   unit->rs_unit = rs_unit;
+  unit->cdb = cdb;
   unit->robs = queue_create(ROB_CAPACITY,
                             sizeof(reorder_buffer_t), clk);
   for (int i = 0; i < ROB_CAPACITY; ++i) {
