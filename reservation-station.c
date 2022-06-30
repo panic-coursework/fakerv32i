@@ -243,7 +243,9 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
       rob_payload_t old =
         *rm_read(rob->payload, rob_payload_t);
       if (old.addr_ready && old.value_ready) continue;
+      bool updated = false;
       if (!old.addr_ready && data.src1 == 0) {
+        updated = true;
         addr_t addr = _rs_calc_addr(data);
         debug_log("SB writing addr to ROB #%02d value %08x",
                   rob->id, addr);
@@ -251,20 +253,23 @@ void _rsu_check_store (rs_unit_t *unit, vector_t *rss) {
         old.addr_ready = true;
       }
       if (!old.value_ready && data.src2 == 0) {
+        updated = true;
         debug_log("SB writing value to ROB #%02d value %08x",
                   rob->id, data.value2);
         old.value = data.value2;
         old.value_ready = true;
       }
-      rm_write(rob->payload, rob_payload_t) = old;
-      if (old.addr_ready && old.value_ready) {
-        debug_log("SB pushing ready state to ROB #%02d!",
-                  rob->id);
-        rm_write(rs->busy, bool) = false;
-        rm_write(rob->ready, bool) = true;
+      if (updated) {
+        rm_write(rob->payload, rob_payload_t) = old;
+        if (old.addr_ready && old.value_ready) {
+          debug_log("SB pushing ready state to ROB #%02d!",
+                    rob->id);
+          rm_write(rs->busy, bool) = false;
+          rm_write(rob->ready, bool) = true;
+        }
+        // write one rob entry at a time
+        break;
       }
-      // write one rob entry at a time
-      break;
     }
   }
 }

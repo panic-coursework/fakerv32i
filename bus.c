@@ -202,6 +202,7 @@ reg_mut_t *bh_acquire (bus_helper_t *bh) {
       debug_log("^ can't be processesed due to buffer full");
       return NULL;
     }
+    debug_log("^ curr occupied, returning buffer");
     bool t = true;
     reg_reduce_write(bh->busy[!req_ix], &t);
     return bh->buffer[!req_ix];

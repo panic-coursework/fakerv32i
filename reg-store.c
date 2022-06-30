@@ -27,12 +27,12 @@ void _reg_file_next (void *state, va_list args) {
     rob_id_t id = *rm_read(regs->rob_id_set[i], rob_id_t);
     rob_id_t id_clear =
       *rm_read(regs->rob_id_clear_if[i], rob_id_t);
+    rm_write(regs->rob_id_clear_if[i], rob_id_t) = 0;
+    regs->rob_id_clear_if[i]->write_count = 0;
     if ((id_clear == id && id != 0) || id_clear < 0) {
       id = 0;
-      rm_write(regs->rob_id_clear_if[i], rob_id_t) = 0;
       rm_write(regs->rob_id_set[i], rob_id_t) = 0;
       // FIXME: hack
-      regs->rob_id_clear_if[i]->write_count = 0;
       regs->rob_id_set[i]->write_count = 0;
     }
     ids->rob_ids[i] = id;
@@ -78,15 +78,18 @@ void reg_store_set (reg_store_t *reg, reg_id_t id,
 
 rob_id_t reg_store_rob_id_get (reg_store_t *reg,
                                reg_id_t id) {
+  if (id == 0) return 0;
   return r_read(reg->rob_ids, struct _rob_ids_t)
            ->rob_ids[id];
 }
 void reg_store_rob_id_set (reg_store_t *reg, reg_id_t id,
                            rob_id_t value) {
+  if (id == 0) return;
   rm_write(reg->rob_id_set[id], rob_id_t) = value;
 }
 void reg_store_rob_id_clear (reg_store_t *reg, reg_id_t id,
                              rob_id_t value) {
+  if (id == 0) return;
   rm_write(reg->rob_id_clear_if[id], rob_id_t) = value;
 }
 void reg_file_clear (reg_store_t *reg) {

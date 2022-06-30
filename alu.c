@@ -42,6 +42,7 @@ void _alu_tick (void *state, va_list args) {
       alu_execute(task.op, task.value1, task.value2);
     debug_log("ALU task complete, writing ROB #%02d = %08x",
               msg.rob, msg.result);
+    rm_write(alu->task, alu_task_t).busy = false;
     if (!reg) {
       debug_log("^ can't write cdb!");
       _alu_result_buf_t buf;
@@ -51,7 +52,6 @@ void _alu_tick (void *state, va_list args) {
       return;
     }
     rm_write(reg, cdb_message_t) = msg;
-    rm_write(alu->task, alu_task_t).busy = false;
   }
 }
 alu_t *alu_create (bus_t *cdb) {
@@ -76,12 +76,14 @@ void alu_free (alu_t *alu) {
 
 status_t alu_task (alu_t *alu, alu_task_t task) {
   if (bh_should_clear(alu->cdb_helper)) {
+    debug_log("ALU rejecting task due to stall!");
     return STATUS_SUCCESS;
   }
   if (bh_should_stall(alu->cdb_helper)) {
     debug_log("ALU rejecting task due to cdb full!");
     return STATUS_FAIL;
   }
+  debug_log("ALU recv task for ROB #%02d", task.base_msg.rob);
   task.busy = true;
   rm_write(alu->task, alu_task_t) = task;
   return STATUS_SUCCESS;
