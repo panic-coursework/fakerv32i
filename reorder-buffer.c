@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "branch-predictor.h"
 #include "clk.h"
 #include "memory.h"
 #include "reorder-buffer.h"
@@ -34,6 +35,7 @@ addr_t _rob_addr (rob_payload_t payload) {
 }
 void _rob_commit (const reorder_buffer_t *rob,
                   rob_unit_t *unit) {
+  ++unit->commit_count;
   const rob_payload_t *data =
     rm_read(rob->payload, rob_payload_t);
   debug_log("ROB %2d commits for addr %08x!", rob->id,
@@ -49,7 +51,12 @@ void _rob_commit (const reorder_buffer_t *rob,
       reg_store_set(unit->reg_store, data->dest,
                     data->value);
     }
-    if (_rob_is_mispredicted(*data)) {
+    bool mispredicted = _rob_is_mispredicted(*data);
+    if (data->op == ROB_BRANCH) {
+      bp_feedback(unit->branch_predictor, data->pc,
+                  data->value, !mispredicted);
+    }
+    if (mispredicted) {
       addr_t addr = _rob_addr(*data);
       debug_log("branch prediction failed, writing pc addr %08x",
                 addr);
@@ -136,6 +143,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
                              memory_t *mem,
+                             branch_predictor_t *bp,
                              bus_t *cdb,
                              clk_t *clk) {
   rob_unit_t *unit =
@@ -145,6 +153,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
   unit->inst_unit = inst_unit;
   unit->rs_unit = rs_unit;
   unit->mem = mem;
+  unit->branch_predictor = bp;
   unit->cdb = cdb;
   unit->robs = queue_create(ROB_CAPACITY,
                             sizeof(reorder_buffer_t), clk);
@@ -156,6 +165,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
     buf->payload =
       reg_mut_create(sizeof(rob_payload_t), clk);
   }
+  unit->commit_count = 0;
 
   bus_listen(cdb, closure_create(_rob_unit_onmsg, unit));
   clk_add_callback(clk, closure_create(_rob_unit_tick, unit));

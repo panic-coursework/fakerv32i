@@ -47,7 +47,8 @@ cpu_t *cpu_create () {
                      cpu->branch_predictor, cdb, clk);
   cpu->rob = rob_unit_create(cpu->reg_store, cpu->ls_queue,
                              cpu->inst_unit, cpu->rs, mem,
-                             cdb, clk);
+                             cpu->branch_predictor, cdb,
+                             clk);
   cpu->rs->rob_unit = cpu->inst_unit->rob_unit = cpu->rob;
 
   // add reservation stations

@@ -40,6 +40,8 @@ struct rob_unit_t {
   queue_t *robs; // reorder_buffer_t
   bus_t *cdb; // for clear()
   memory_t *mem; // for clear()
+  branch_predictor_t *branch_predictor; // for feedback
+  long commit_count;
 };
 
 rob_unit_t *rob_unit_create (reg_store_t *regs,
@@ -47,6 +49,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
                              memory_t *mem,
+                             branch_predictor_t *bp,
                              bus_t *cdb,
                              clk_t *clk);
 void rob_unit_free (rob_unit_t *rob_unit);
