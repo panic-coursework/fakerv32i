@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "clk.h"
+#include "memory.h"
 #include "reorder-buffer.h"
 #include "bus.h"
 #include "lib/closure.h"
@@ -37,6 +38,10 @@ void _rob_commit (const reorder_buffer_t *rob,
     rm_read(rob->payload, rob_payload_t);
   debug_log("ROB %2d commits for addr %08x!", rob->id,
             data->pc);
+#define PRINT_PC
+#ifdef PRINT_PC
+  printf("%08x\n", data->pc);
+#endif
   bool success = true;
   switch (data->op) {
     case ROB_BRANCH:
@@ -55,6 +60,7 @@ void _rob_commit (const reorder_buffer_t *rob,
       rs_unit_clear(unit->rs_unit);
       ls_queue_clear(unit->ls_queue);
       bus_clear(unit->cdb);
+      mem_clear(unit->mem);
     } else {
       debug_log("branch prediction success!");
     }
@@ -130,6 +136,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
                              ls_queue_t *queue,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
+                             memory_t *mem,
                              bus_t *cdb,
                              clk_t *clk) {
   rob_unit_t *unit =
@@ -138,6 +145,7 @@ rob_unit_t *rob_unit_create (reg_store_t *regs,
   unit->ls_queue = queue;
   unit->inst_unit = inst_unit;
   unit->rs_unit = rs_unit;
+  unit->mem = mem;
   unit->cdb = cdb;
   unit->robs = queue_create(ROB_CAPACITY,
                             sizeof(reorder_buffer_t), clk);

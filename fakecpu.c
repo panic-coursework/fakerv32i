@@ -43,6 +43,10 @@ void _mem_set_sz (memory_t *mem, addr_t addr,
 
 void fakecpu_tick (fakecpu_t *cpu) {
   word_t inst_word = mem_get_inst(cpu->mem, cpu->pc);
+#define PRINT_PC
+#ifdef PRINT_PC
+  printf("%08x\n", cpu->pc);
+#endif
   inst_t inst = inst_decode(inst_word);
   if (inst.op == INST_HCF) {
     hcf = true;

@@ -28,6 +28,7 @@ void _dump_rob (cpu_t *cpu);
 void _dump_ls_queue (cpu_t *cpu);
 
 void cpu_dump (cpu_t *cpu) {
+  return;
   _dump_clk(cpu);
   _dump_stk(cpu);
   _dump_reg(cpu);

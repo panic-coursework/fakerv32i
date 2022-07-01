@@ -47,6 +47,13 @@ void _mem_set_sz (memory_t *mem, addr_t addr,
 }
 void _mem_tick (void *state, va_list args) {
   memory_t *mem = (memory_t *) state;
+  if (*rm_read(mem->clear, bool)) {
+    for (int i = 0; i < MEM_TICKS; ++i) {
+      rm_write(mem->load_requests[i],
+               struct mem_load_request_t).busy = false;
+    }
+    return;
+  }
   bool cdb_sent = false;
   // load
   for (int i = 0; i < MEM_TICKS; ++i) {
@@ -103,6 +110,8 @@ memory_t *mem_create (bus_t *cdb, clk_t *clk) {
   }
   mem->cdb = cdb;
   mem->cdb_helper = bh_create(cdb);
+  mem->clear = reg_mut_create(sizeof(bool), clk);
+  mem->clear->clear = true;
   clk_add_callback(clk, closure_create(_mem_tick, mem));
   return mem;
 }
@@ -177,4 +186,8 @@ status_t mem_request_store (memory_t *mem, addr_t addr,
   req->size = size;
   req->ticks_remaining = MEM_TICKS - 1;
   return STATUS_SUCCESS;
+}
+
+void mem_clear (memory_t *mem) {
+  rm_write(mem->clear, bool) = true;
 }

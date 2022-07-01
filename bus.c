@@ -26,6 +26,7 @@ void _bus_arb (void *state, va_list args) {
       break;
     }
   }
+#ifdef DEBUG_LOG
   if (*gnt == 0) return;
   debug_log("_bus_arb: winner is %ld", *gnt);
   vector_foreach (bus->arbitrator.req, i, reg) {
@@ -33,6 +34,7 @@ void _bus_arb (void *state, va_list args) {
       debug_log("_bus_arb: %ld has req", i + 1);
     }
   }
+#endif
 }
 
 void _bus_tick (void *state, va_list args) {

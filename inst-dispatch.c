@@ -83,9 +83,9 @@ addr_t inst_dispatch (inst_unit_t *unit,
       data->value2 = inst.immediate;
     } else {
       assert(inst.opcode == OPC_IMM || inst.op == INST_HCF);
-      data->value1 = inst.immediate;
-      data->src1 = 0;
-      _inst_reg_set(unit, inst.rs1, &data->src2, &data->value2);
+      _inst_reg_set(unit, inst.rs1, &data->src1, &data->value1);
+      data->value2 = inst.immediate;
+      data->src2 = 0;
     }
     break;
 

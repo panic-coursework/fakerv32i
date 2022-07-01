@@ -8,7 +8,6 @@
 #define MEM_SIZE 131072
 #define MEM_TICKS 3
 
-
 struct mem_load_request_t {
   bool busy;
   addr_t addr;
@@ -31,6 +30,7 @@ struct memory_t {
   bus_helper_t *cdb_helper;
   reg_mut_t *load_requests[MEM_TICKS];
   reg_mut_t *store_requests[MEM_TICKS];
+  reg_mut_t *clear; // bool
 };
 
 memory_t *mem_create (bus_t *cdb, clk_t *clk);
@@ -44,3 +44,5 @@ status_t mem_request_load (memory_t *mem, addr_t addr,
   ls_size_t size, cdb_message_t base_msg);
 status_t mem_request_store (memory_t *mem, addr_t addr,
   word_t value, ls_size_t size, reg_mut_t *callback);
+
+void mem_clear (memory_t *mem);

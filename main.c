@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "io.h"
 
+#define FAKE
 #ifndef FAKE
 
 int main () {

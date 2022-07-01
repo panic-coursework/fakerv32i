@@ -39,12 +39,14 @@ struct rob_unit_t {
   rs_unit_t *rs_unit; // for clear()
   queue_t *robs; // reorder_buffer_t
   bus_t *cdb; // for clear()
+  memory_t *mem; // for clear()
 };
 
 rob_unit_t *rob_unit_create (reg_store_t *regs,
                              ls_queue_t *queue,
                              inst_unit_t *inst_unit,
                              rs_unit_t *rs_unit,
+                             memory_t *mem,
                              bus_t *cdb,
                              clk_t *clk);
 void rob_unit_free (rob_unit_t *rob_unit);
