@@ -3,7 +3,7 @@ CFLAGS = -g -Ofast
 CXX = g++
 CXXFLAGS = -g -Ofast
 
-EXE = rv32i
+EXE = code
 
 SRCS = $(shell find . -name '*.cpp' -or  -name '*.c' | grep -v tests/ | grep -v res/)
 OBJS_C = $(SRCS:.c=.o)
