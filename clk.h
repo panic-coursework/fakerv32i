@@ -19,3 +19,5 @@ void clk_add_reg (clk_t *clk, closure_t *callback);
 
 long clk_get (clk_t *clk);
 void clk_tick (clk_t *clk);
+
+void clk_random_shuffle (clk_t *clk);

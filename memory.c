@@ -11,6 +11,7 @@
 #include "clk.h"
 #include "lib/closure.h"
 #include "lib/log.h"
+#include "queue.h"
 #include "reg.h"
 #include "rv32i.h"
 #include "rvmath.h"
@@ -49,18 +50,28 @@ void _mem_tick (void *state, va_list args) {
   memory_t *mem = (memory_t *) state;
   if (*rm_read(mem->clear, bool)) {
     for (int i = 0; i < MEM_TICKS; ++i) {
-      rm_write(mem->load_requests[i],
-               struct mem_load_request_t).busy = false;
+      bool busy = *rr_read(mem->store_requests_busy[i], bool);
+      reg_reduce_write(mem->store_requests_busy[i], &busy);
     }
     return;
   }
+
+  bool load_requests_busy[MEM_TICKS];
+  bool store_requests_busy[MEM_TICKS];
+  for (int i = 0; i < MEM_TICKS; ++i) {
+    load_requests_busy[i] =
+      *rr_read(mem->load_requests_busy[i], bool);
+    store_requests_busy[i] =
+      *rr_read(mem->store_requests_busy[i], bool);
+  }
+
   bool cdb_sent = false;
   // load
   for (int i = 0; i < MEM_TICKS; ++i) {
+    if (!load_requests_busy[i]) continue;
     const struct mem_load_request_t *req =
       rm_read(mem->load_requests[i],
               struct mem_load_request_t);
-    if (!req->busy) continue;
     struct mem_load_request_t *req_next =
       &rm_write(mem->load_requests[i],
                 struct mem_load_request_t);
@@ -75,16 +86,16 @@ void _mem_tick (void *state, va_list args) {
       debug_log("mem writing to ROB #%02d addr %08x value %08x",
                 msg.rob, req->addr, msg.result);
       rm_write(reg, cdb_message_t) = msg;
-      req_next->busy = false;
+      load_requests_busy[i] = false;
       continue;
     }
   }
   // store
   for (int i = 0; i < MEM_TICKS; ++i) {
+    if (!store_requests_busy[i]) continue;
     const struct mem_store_request_t *req =
       rm_read(mem->store_requests[i],
               struct mem_store_request_t);
-    if (!req->busy) continue;
     struct mem_store_request_t *req_next =
       &rm_write(mem->store_requests[i],
                 struct mem_store_request_t);
@@ -92,9 +103,15 @@ void _mem_tick (void *state, va_list args) {
     if (req_next->ticks_remaining == 0) {
       _mem_set_sz(mem, req->addr, req->value, req->size);
       debug_log("store addr %08x complete!", req->addr);
-      req_next->busy = false;
+      store_requests_busy[i] = false;
       rm_write(req->callback, bool) = true;
     }
+  }
+  for (int i = 0; i < MEM_TICKS; ++i) {
+    reg_reduce_write(mem->load_requests_busy[i],
+      &load_requests_busy[i]);
+    reg_reduce_write(mem->store_requests_busy[i],
+      &store_requests_busy[i]);
   }
 }
 memory_t *mem_create (bus_t *cdb, clk_t *clk) {
@@ -105,8 +122,8 @@ memory_t *mem_create (bus_t *cdb, clk_t *clk) {
       reg_mut_create(sizeof(struct mem_load_request_t), clk);
     mem->store_requests[i] =
       reg_mut_create(sizeof(struct mem_store_request_t), clk);
-    mem->load_requests[i]->allow_multiwrite = true;
-    mem->store_requests[i]->allow_multiwrite = true;
+    mem->load_requests_busy[i] = reg_or_create(clk);
+    mem->store_requests_busy[i] = reg_or_create(clk);
   }
   mem->cdb = cdb;
   mem->cdb_helper = bh_create(cdb);
@@ -119,6 +136,8 @@ void mem_free (memory_t *mem) {
   for (int i = 0; i < MEM_TICKS; ++i) {
     reg_mut_free(mem->load_requests[i]);
     reg_mut_free(mem->store_requests[i]);
+    reg_reduce_free(mem->load_requests_busy[i]);
+    reg_reduce_free(mem->store_requests_busy[i]);
   }
   bh_free(mem->cdb_helper);
   free(mem);
@@ -140,10 +159,9 @@ word_t mem_get_inst (memory_t *mem, addr_t addr) {
 
 int _mem_acquire_load_req (memory_t *mem) {
   for (int i = 0; i < MEM_SIZE; ++i) {
-    if (!rm_read(mem->load_requests[i],
-                 struct mem_load_request_t)->busy) {
-      rm_write(mem->load_requests[i],
-               struct mem_load_request_t).busy = true;
+    if (!*rr_read(mem->load_requests_busy[i], bool)) {
+      bool t = true;
+      reg_reduce_write(mem->load_requests_busy[i], &t);
       return i;
     }
   }
@@ -151,10 +169,9 @@ int _mem_acquire_load_req (memory_t *mem) {
 }
 int _mem_acquire_store_req (memory_t *mem) {
   for (int i = 0; i < MEM_SIZE; ++i) {
-    if (!rm_read(mem->store_requests[i],
-                 struct mem_store_request_t)->busy) {
-      rm_write(mem->store_requests[i],
-               struct mem_store_request_t).busy = true;
+    if (!*rr_read(mem->store_requests_busy[i], bool)) {
+      bool t = true;
+      reg_reduce_write(mem->store_requests_busy[i], &t);
       return i;
     }
   }

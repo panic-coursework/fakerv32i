@@ -57,7 +57,6 @@ reg_mut_t *reg_mut_create (size_t size, clk_t *clk) {
   reg->buf = calloc(1, size);
   reg->next = calloc(1, size);
   reg->write_count = 0;
-  reg->allow_multiwrite = false;
   reg->clear = false;
 
   clk_add_regmut(clk, closure_create(_reg_mut_tick, reg));
@@ -74,7 +73,7 @@ const void *reg_mut_read (reg_mut_t *reg) {
   return reg->buf;
 }
 void *reg_mut_write (reg_mut_t *reg) {
-  if (++(reg->write_count) > 1 && !reg->allow_multiwrite) {
+  if (++(reg->write_count) > 1) {
     debug_log("reg_mut_write called more than once!");
     assert(0);
   }

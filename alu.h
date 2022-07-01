@@ -10,13 +10,13 @@ struct alu_task_t {
   alu_op_t op;
   word_t value1, value2;
   cdb_message_t base_msg;
-  bool busy;
 };
 
 struct alu_t {
   bus_t *cdb;
   bus_helper_t *cdb_helper;
   reg_mut_t *task;
+  reg_reduce_t *busy;
   reg_mut_t *result_buf;
 };
 

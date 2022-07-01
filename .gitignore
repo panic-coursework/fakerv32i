@@ -7,6 +7,10 @@
 *.log
 valgrind*
 vgcore*
+perf.data
+perf.data*
+perf.svg
+perf*.svg
 *.out
 
 /rv32i

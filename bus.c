@@ -110,6 +110,9 @@ bool bus_arb_status (bus_t *bus, size_t id) {
 void bus_clear (bus_t *bus) {
   rm_write(bus->clear, int) = 2;
 }
+void bus_random_shuffle (bus_t *bus) {
+  vector_random_shuffle(bus->listeners);
+}
 
 const void *bus_get_data (bus_t *bus) {
   if (!*rm_read(bus->arbitrator.fire, bool)) return NULL;

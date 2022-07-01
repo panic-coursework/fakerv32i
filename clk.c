@@ -46,6 +46,9 @@ long clk_get (clk_t *clk) {
   return clk->clk;
 }
 void clk_tick (clk_t *clk) {
+#ifdef RANDOM_SHUFFLE
+  clk_random_shuffle(clk);
+#endif
   closure_t *callback;
   vector_foreach(clk->regmuts, i, callback) {
     closure_call(callback, clk);
@@ -57,4 +60,10 @@ void clk_tick (clk_t *clk) {
   vector_foreach(clk->callbacks, i, callback) {
     closure_call(callback, clk);
   }
+}
+
+void clk_random_shuffle (clk_t *clk) {
+  vector_random_shuffle(clk->callbacks);
+  vector_random_shuffle(clk->regmuts);
+  vector_random_shuffle(clk->regs);
 }

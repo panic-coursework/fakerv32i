@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 extern "C" {
@@ -26,6 +27,10 @@ size_t vector_push (vector_t *vec, void *value) {
 }
 size_t vector_size (vector_t *vec) {
   return vec->vec.size();
+}
+
+void vector_random_shuffle (vector_t *vec) {
+  std::random_shuffle(vec->vec.begin(), vec->vec.end());
 }
 
 int _vector_foreach (vector_t *vec, size_t i, void **var) {

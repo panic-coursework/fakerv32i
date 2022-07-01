@@ -20,9 +20,9 @@ void _alu_tick (void *state, va_list args) {
   alu_t *alu = (alu_t *) state;
   if (bh_should_clear(alu->cdb_helper)) {
     rm_write(alu->result_buf, _alu_result_buf_t).busy = false;
-    rm_write(alu->task, alu_task_t).busy = false;
     return;
   }
+  bool busy = *rr_read(alu->busy, bool);
   _alu_result_buf_t buf =
     *rm_read(alu->result_buf, _alu_result_buf_t);
   if (buf.busy) {
@@ -32,17 +32,17 @@ void _alu_tick (void *state, va_list args) {
     rm_write(reg, cdb_message_t) = buf.msg;
     buf.busy = false;
     rm_write(alu->result_buf, _alu_result_buf_t) = buf;
+    reg_reduce_write(alu->busy, &busy);
     return;
   }
-  alu_task_t task = *rm_read(alu->task, alu_task_t);
-  if (task.busy) {
+  if (busy) {
+    alu_task_t task = *rm_read(alu->task, alu_task_t);
     reg_mut_t *reg = bh_acquire(alu->cdb_helper);
     cdb_message_t msg = task.base_msg;
     msg.result =
       alu_execute(task.op, task.value1, task.value2);
     debug_log("ALU task complete, writing ROB #%02d = %08x",
               msg.rob, msg.result);
-    rm_write(alu->task, alu_task_t).busy = false;
     if (!reg) {
       debug_log("^ can't write cdb!");
       _alu_result_buf_t buf;
@@ -59,9 +59,9 @@ alu_t *alu_create (bus_t *cdb) {
   alu->cdb = cdb;
   alu->cdb_helper = bh_create(cdb);
   alu->task = reg_mut_create(sizeof(alu_task_t), cdb->clk);
-  alu->task->allow_multiwrite = true;
   alu->result_buf =
     reg_mut_create(sizeof(_alu_result_buf_t), cdb->clk);
+  alu->busy = reg_or_create(cdb->clk);
 
   clk_add_callback(cdb->clk, closure_create(_alu_tick, alu));
 
@@ -71,6 +71,7 @@ void alu_free (alu_t *alu) {
   bh_free(alu->cdb_helper);
   reg_mut_free(alu->task);
   reg_mut_free(alu->result_buf);
+  reg_reduce_free(alu->busy);
   free(alu);
 }
 
@@ -84,8 +85,9 @@ status_t alu_task (alu_t *alu, alu_task_t task) {
     return STATUS_FAIL;
   }
   debug_log("ALU recv task for ROB #%02d", task.base_msg.rob);
-  task.busy = true;
   rm_write(alu->task, alu_task_t) = task;
+  bool t = true;
+  reg_reduce_write(alu->busy, &t);
   return STATUS_SUCCESS;
 }
 

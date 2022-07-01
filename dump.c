@@ -28,13 +28,14 @@ void _dump_rob (cpu_t *cpu);
 void _dump_ls_queue (cpu_t *cpu);
 
 void cpu_dump (cpu_t *cpu) {
-  return;
+#ifdef CPU_DUMP
   _dump_clk(cpu);
   _dump_stk(cpu);
   _dump_reg(cpu);
   _dump_rs(cpu);
   _dump_rob(cpu);
   _dump_ls_queue(cpu);
+#endif
 }
 
 void _dump_clk (cpu_t *cpu) {

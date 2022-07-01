@@ -33,6 +33,7 @@ bool bus_arb_status (bus_t *bus, size_t id);
 const void *bus_get_data (bus_t *bus);
 void bus_listen (bus_t *bus, closure_t *callback);
 
+void bus_random_shuffle (bus_t *bus);
 void bus_clear(bus_t *bus);
 
 #define BUS_TICKS 2

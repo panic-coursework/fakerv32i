@@ -26,7 +26,6 @@ struct reg_mut_t {
   void *buf;
   void *next;
   int write_count;
-  bool allow_multiwrite;
   bool clear;
 };
 

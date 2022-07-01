@@ -9,14 +9,12 @@
 #define MEM_TICKS 3
 
 struct mem_load_request_t {
-  bool busy;
   addr_t addr;
   ls_size_t size;
   cdb_message_t base_msg;
   int ticks_remaining;
 };
 struct mem_store_request_t {
-  bool busy;
   addr_t addr;
   word_t value;
   reg_mut_t *callback;
@@ -29,7 +27,9 @@ struct memory_t {
   bus_t *cdb;
   bus_helper_t *cdb_helper;
   reg_mut_t *load_requests[MEM_TICKS];
+  reg_reduce_t *load_requests_busy[MEM_TICKS];
   reg_mut_t *store_requests[MEM_TICKS];
+  reg_reduce_t *store_requests_busy[MEM_TICKS];
   reg_mut_t *clear; // bool
 };
 

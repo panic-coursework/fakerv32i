@@ -160,7 +160,6 @@ void _rsu_check_alu (rs_unit_t *unit, vector_t *rss) {
     if (data.src1 != 0 || data.src2 != 0) continue;
     status_t status =
       alu_task(unit->alu_pool->alus[alu_id], (alu_task_t) {
-        .busy = true,
         .base_msg = (cdb_message_t) {
           .rob = data.dest,
         },

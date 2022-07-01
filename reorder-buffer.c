@@ -38,7 +38,6 @@ void _rob_commit (const reorder_buffer_t *rob,
     rm_read(rob->payload, rob_payload_t);
   debug_log("ROB %2d commits for addr %08x!", rob->id,
             data->pc);
-#define PRINT_PC
 #ifdef PRINT_PC
   printf("%08x\n", data->pc);
 #endif

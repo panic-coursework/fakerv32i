@@ -69,6 +69,10 @@ cpu_t *cpu_create () {
   bus_listen(cdb, closure_create(_cpu_debug_cdb, cpu));
   clk_add_callback(clk, closure_create(_cpu_debug, cpu));
 
+#ifdef RANDOM_SHUFFLE
+  bus_random_shuffle(cdb);
+#endif
+
   return cpu;
 }
 void cpu_free (cpu_t *cpu) {
