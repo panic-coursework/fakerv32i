@@ -6,6 +6,7 @@
 
 struct branch_predictor_t {
   // TODO
+  reg_mut_t *state; // int
   long total;
   long correct;
 };

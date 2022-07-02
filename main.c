@@ -17,7 +17,8 @@ int main () {
   printf("cycles = %ld\n", clk_get(cpu->clk));
   branch_predictor_t *bp = cpu->branch_predictor;
   double rate = (double) bp->correct / bp->total;
-  printf("bp succ = %lf\n", rate);
+  printf("bp total %ld, correct %ld, succ = %lf\n",
+         bp->total, bp->correct, rate);
   cpu_free(cpu);
   return 0;
 }
