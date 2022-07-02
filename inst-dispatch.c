@@ -126,11 +126,12 @@ addr_t inst_dispatch (inst_unit_t *unit,
     _inst_reg_set(unit, inst.rs1, &data->src1, &data->value1);
     _inst_reg_set(unit, inst.rs2, &data->src2, &data->value2);
     addr_t jump_target = signed_add(pc, inst.immediate);
-    bool predicted = branch_predict(unit->branch_predictor,
-                                    pc);
+    bp_result_t predicted =
+      branch_predict(unit->branch_predictor, pc);
     rob_data->predicted_take = predicted;
-    rob_data->fallback = predicted ? next_pc : jump_target;
-    if (predicted) next_pc = jump_target;
+    rob_data->fallback =
+      predicted.take ? next_pc : jump_target;
+    if (predicted.take) next_pc = jump_target;
     break;
 
     case IF_S:

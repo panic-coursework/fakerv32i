@@ -20,7 +20,7 @@
 
 bool _rob_is_mispredicted (rob_payload_t payload) {
   if (payload.op == ROB_BRANCH) {
-    return payload.predicted_take != payload.value;
+    return payload.predicted_take.take != payload.value;
   } else if (payload.op == ROB_JALR) {
     return payload.predicted_addr != (payload.addr & ~1u);
   }
@@ -54,7 +54,7 @@ void _rob_commit (const reorder_buffer_t *rob,
     bool mispredicted = _rob_is_mispredicted(*data);
     if (data->op == ROB_BRANCH) {
       bp_feedback(unit->branch_predictor, data->pc,
-                  data->value, !mispredicted);
+                  data->predicted_take, data->value);
     } else {
       bp_feedback_jalr(unit->branch_predictor, data->pc,
                        data->addr & ~1u, !mispredicted);

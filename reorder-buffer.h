@@ -1,8 +1,9 @@
 #pragma once
 
-#include "rv32i.h"
-
 #include <stdbool.h>
+
+#include "branch-predictor.h"
+#include "rv32i.h"
 
 // TODO: private or public?
 struct rob_payload_t {
@@ -19,7 +20,7 @@ struct rob_payload_t {
   bool addr_ready, value_ready;
   // for ROB_BRANCH
   addr_t fallback;
-  bool predicted_take;
+  bp_result_t predicted_take;
   // for ROB_JALR
   addr_t predicted_addr;
 };
