@@ -19,6 +19,9 @@ int main () {
   double rate = (double) bp->correct / bp->total;
   printf("bp total %ld, correct %ld, succ = %lf\n",
          bp->total, bp->correct, rate);
+  double jalr_rate = (double) bp->jalr_correct / bp->jalr_total;
+  printf("jalr total %ld, correct %ld, succ = %lf\n",
+         bp->jalr_total, bp->jalr_correct, jalr_rate);
   cpu_free(cpu);
   return 0;
 }

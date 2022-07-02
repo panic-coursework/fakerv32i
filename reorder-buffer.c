@@ -55,6 +55,9 @@ void _rob_commit (const reorder_buffer_t *rob,
     if (data->op == ROB_BRANCH) {
       bp_feedback(unit->branch_predictor, data->pc,
                   data->value, !mispredicted);
+    } else {
+      bp_feedback_jalr(unit->branch_predictor, data->pc,
+                       data->addr & ~1u, !mispredicted);
     }
     if (mispredicted) {
       addr_t addr = _rob_addr(*data);

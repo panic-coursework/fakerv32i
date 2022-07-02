@@ -10,6 +10,8 @@ branch_predictor_t *bp_create (clk_t *clk) {
     malloc(sizeof(branch_predictor_t));
   bp->correct = 0;
   bp->total = 0;
+  bp->jalr_total = 0;
+  bp->jalr_correct = 0;
   bp->state = reg_mut_create(sizeof(int), clk);
   return bp;
 }
@@ -35,4 +37,8 @@ void bp_feedback (branch_predictor_t *bp, addr_t pc,
   rm_write(bp->state, int) = state;
 }
 
-// TODO: jalr api design
+void bp_feedback_jalr (branch_predictor_t *bp, addr_t pc,
+                       addr_t actual, bool correct) {
+  ++bp->jalr_total;
+  if (correct) ++bp->jalr_correct;
+}
