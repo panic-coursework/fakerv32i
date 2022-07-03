@@ -13,6 +13,7 @@ int main () {
   read_to_memory(cpu->mem);
   while (!hcf) cpu_tick(cpu);
   write_result(cpu->reg_store);
+#ifdef STATS
   printf("commits = %ld\n", cpu->rob->commit_count);
   printf("cycles = %ld\n", clk_get(cpu->clk));
   branch_predictor_t *bp = cpu->branch_predictor;
@@ -22,6 +23,7 @@ int main () {
   double jalr_rate = (double) bp->jalr_correct / bp->jalr_total;
   printf("jalr total %ld, correct %ld, succ = %lf\n",
          bp->jalr_total, bp->jalr_correct, jalr_rate);
+#endif
   cpu_free(cpu);
   return 0;
 }
